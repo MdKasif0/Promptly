@@ -33,7 +33,7 @@ export function ChatLayout({
 }: ChatLayoutProps) {
   return (
     <SidebarProvider>
-      <div className="relative flex h-full w-full max-w-screen-2xl">
+      <div className="relative flex h-full w-full max-w-screen-2xl bg-background">
         <ChatSidebar
           history={chatHistory}
           activeChatId={activeChatId}
