@@ -25,6 +25,7 @@ const getErrorMessage = (err: any): string => {
   if (err instanceof Error) {
     if (err.cause) {
         try {
+            // Attempt to parse the cause as JSON, which is common for API errors
             const cause = JSON.parse(String(err.cause));
             if (cause.error?.message) return cause.error.message;
         } catch {}
