@@ -45,6 +45,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Link from "next/link";
 
 interface ChatSidebarProps {
   history: ChatSession[];
@@ -152,7 +153,7 @@ export function ChatSidebar({
                            <span>Archive</span>
                         </DropdownMenuItem>
                         <AlertDialogTrigger asChild>
-                           <DropdownMenuItem className="text-destructive">
+                           <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
                               <Trash2 className="mr-2 h-4 w-4" />
                               <span>Delete</span>
                             </DropdownMenuItem>
@@ -163,17 +164,18 @@ export function ChatSidebar({
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>
-                        Are you absolutely sure?
+                       Are you sure you want to delete this chat?
                       </AlertDialogTitle>
                       <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete
-                        this chat session.
+                        To clear any memories from this chat, visit your{" "}
+                         <Link href="#" className="underline">settings</Link>.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogFooter className="!flex-row !justify-center gap-4 pt-4">
+                      <AlertDialogCancel className="w-full">Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={(e) => handleDeleteChat(e, chat.id)}
+                        className="w-full"
                       >
                         Delete
                       </AlertDialogAction>
