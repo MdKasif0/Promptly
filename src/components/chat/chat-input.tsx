@@ -3,9 +3,10 @@
 import * as React from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Image as ImageIcon, Send, X } from "lucide-react";
+import { ImagePlus, Send, Mic, Settings2 } from "lucide-react";
 import Image from 'next/image';
 import { getModelById, type ModelId } from "@/lib/models";
+import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
   input: string;
@@ -65,47 +66,23 @@ export function ChatInput({
   }, [isLoading]);
 
   return (
-    <div className="border-t bg-background p-4 md:p-6">
+    <div className="w-full max-w-2xl mx-auto p-4">
       <form onSubmit={handleSubmit} className="relative">
-        {image && (
-          <div className="relative mb-2 h-24 w-24">
-            <Image src={image} alt="Image preview" layout="fill" objectFit="cover" className="rounded-lg" data-ai-hint="image preview"/>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute -right-2 -top-2 h-6 w-6 rounded-full bg-muted text-muted-foreground"
-              onClick={() => setImage(null)}
-            >
-              <X size={14} />
-            </Button>
-          </div>
-        )}
-        <Textarea
-          ref={inputRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type a message or upload an image..."
-          className="pr-28"
-          rows={1}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              handleSubmit(e);
-            }
-          }}
-          disabled={isLoading}
-        />
-        <div className="absolute bottom-2.5 right-4 flex items-center gap-2">
+        <div className={cn(
+          "flex items-center bg-secondary rounded-full transition-all duration-300",
+          image ? "p-2" : "p-0"
+        )}>
           {isVisionModel && (
             <>
             <Button
               type="button"
               variant="ghost"
               size="icon"
+              className="rounded-full h-10 w-10 shrink-0"
               onClick={() => fileInputRef.current?.click()}
               disabled={isLoading}
             >
-              <ImageIcon className="text-muted-foreground" />
+              <ImagePlus className="text-muted-foreground" />
               <span className="sr-only">Upload Image</span>
             </Button>
             <input
@@ -117,8 +94,40 @@ export function ChatInput({
             />
             </>
           )}
-          <Button type="submit" size="icon" disabled={isLoading || (!input.trim() && !image)} className="bg-accent text-accent-foreground hover:bg-accent/90">
-            <Send />
+          <div className="relative w-full">
+            {image && (
+              <div className="absolute left-2 -top-24 h-24 w-24">
+                <Image src={image} alt="Image preview" layout="fill" objectFit="cover" className="rounded-lg border-2 border-primary" data-ai-hint="image preview"/>
+              </div>
+            )}
+            <Textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask anything..."
+              className="bg-transparent border-none rounded-full pr-24 pl-4 py-3 h-12 text-base resize-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+              rows={1}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
+              }}
+              disabled={isLoading}
+            />
+            <div className="absolute bottom-1 right-2 flex items-center gap-1">
+               <Button type="button" variant="ghost" size="icon" className="rounded-full h-9 w-9" disabled={isLoading}>
+                 <Mic className="text-muted-foreground" />
+                 <span className="sr-only">Use microphone</span>
+               </Button>
+               <Button type="button" variant="ghost" size="icon" className="rounded-full h-9 w-9" disabled={isLoading}>
+                 <Settings2 className="text-muted-foreground" />
+                 <span className="sr-only">Settings</span>
+               </Button>
+             </div>
+          </div>
+          <Button type="submit" size="icon" disabled={isLoading || (!input.trim() && !image)} className="rounded-full h-10 w-10 shrink-0 bg-primary text-primary-foreground hover:bg-primary/90">
+            <Send size={18} />
             <span className="sr-only">Send</span>
           </Button>
         </div>

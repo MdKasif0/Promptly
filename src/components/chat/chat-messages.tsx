@@ -19,9 +19,9 @@ interface ChatMessagesProps {
 
 const LoadingIndicator = () => (
   <div className="flex items-center space-x-2">
-    <div className="h-2 w-2 animate-pulse rounded-full bg-accent [animation-delay:-0.3s]" />
-    <div className="h-2 w-2 animate-pulse rounded-full bg-accent [animation-delay:-0.15s]" />
-    <div className="h-2 w-2 animate-pulse rounded-full bg-accent" />
+    <div className="h-2 w-2 animate-pulse rounded-full bg-primary [animation-delay:-0.3s]" />
+    <div className="h-2 w-2 animate-pulse rounded-full bg-primary [animation-delay:-0.15s]" />
+    <div className="h-2 w-2 animate-pulse rounded-full bg-primary" />
   </div>
 );
 
@@ -47,63 +47,64 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
 
   React.useEffect(() => {
     if (scrollableContainerRef.current) {
-      scrollableContainerRef.current.scrollTop = scrollableContainerRef.current.scrollHeight;
+        setTimeout(() => {
+             scrollableContainerRef.current!.scrollTop = scrollableContainerRef.current!.scrollHeight;
+        }, 100);
     }
   }, [messages, isLoading]);
 
   return (
-    <div ref={scrollableContainerRef} className="h-full space-y-6 overflow-y-auto p-4 md:p-6">
+    <div ref={scrollableContainerRef} className="h-full space-y-6 overflow-y-auto px-4 pt-20 pb-28">
       <AnimatePresence>
         {messages.map((message) => (
           <motion.div
             key={message.id}
             layout
-            initial={{ opacity: 0, scale: 0.8, y: 50 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.8, y: 50 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className={cn(
-              "group relative flex items-start gap-4",
-              message.role === "user" ? "justify-end" : "justify-start"
-            )}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            className="group relative flex items-start gap-3 w-full"
           >
             {message.role === "assistant" && <ChatAvatar role="assistant" />}
-            <div
-              className={cn(
-                "max-w-2xl rounded-xl px-4 py-3 shadow-md",
-                message.role === "user"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-card text-card-foreground"
-              )}
-            >
-              {message.image && (
-                <div className="relative mb-2 aspect-video h-48">
-                    <Image
-                      src={message.image}
-                      alt="User upload"
-                      fill
-                      className="rounded-lg object-cover"
-                      data-ai-hint="user upload"
-                    />
-                </div>
-              )}
-               <MemoizedReactMarkdown
-                className="prose prose-sm dark:prose-invert prose-p:leading-relaxed prose-a:text-accent-foreground prose-a:underline prose-code:before:content-none prose-code:after:content-none prose-code:bg-muted prose-code:text-muted-foreground prose-code:rounded-md prose-code:px-1.5 prose-code:py-1"
-                remarkPlugins={[remarkGfm]}
+            <div className={cn(
+              "flex flex-col gap-2 max-w-2xl", 
+              message.role === "user" ? "ml-auto items-end" : "mr-auto items-start"
+            )}>
+                <div
+                  className={cn(
+                    "relative rounded-xl px-4 py-3 prose prose-sm dark:prose-invert prose-p:leading-relaxed prose-a:text-accent-foreground prose-a:underline prose-code:before:content-none prose-code:after:content-none prose-code:bg-muted prose-code:text-muted-foreground prose-code:rounded-md prose-code:px-1.5 prose-code:py-1",
+                    message.role === "user"
+                      ? "bg-primary text-primary-foreground rounded-br-none"
+                      : "bg-card text-card-foreground rounded-bl-none"
+                  )}
                 >
-                {message.content}
-                </MemoizedReactMarkdown>
+                  {message.image && (
+                    <div className="relative mb-2 aspect-video h-48">
+                        <Image
+                          src={message.image}
+                          alt="User upload"
+                          fill
+                          className="rounded-lg object-cover"
+                          data-ai-hint="user upload"
+                        />
+                    </div>
+                  )}
+                   <MemoizedReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {message.content}
+                    </MemoizedReactMarkdown>
+                </div>
+                 {message.role === "assistant" && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
+                    onClick={() => handleCopy(message.content)}
+                  >
+                    <Copy size={16} />
+                  </Button>
+                )}
             </div>
-             {message.role === "assistant" && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute bottom-2 right-2 h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
-                onClick={() => handleCopy(message.content)}
-              >
-                <Copy size={16} />
-              </Button>
-            )}
             {message.role === "user" && <ChatAvatar role="user" />}
           </motion.div>
         ))}
@@ -112,10 +113,10 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
             layout
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-start gap-4"
+            className="flex items-start gap-3"
           >
             <ChatAvatar role="assistant" />
-            <div className="rounded-xl bg-card px-4 py-3 shadow-md">
+            <div className="rounded-xl bg-card px-4 py-3">
               <LoadingIndicator />
             </div>
           </motion.div>

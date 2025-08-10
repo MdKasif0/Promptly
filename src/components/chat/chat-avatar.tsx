@@ -1,7 +1,7 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Bot, User } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Bot, User, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ChatAvatarProps {
@@ -10,12 +10,16 @@ interface ChatAvatarProps {
 
 export function ChatAvatar({ role }: ChatAvatarProps) {
   return (
-    <Avatar className={cn("h-10 w-10", role === 'user' ? 'bg-primary' : 'bg-card')}>
-      <AvatarFallback>
+    <Avatar className={cn("h-8 w-8", 
+      role === 'user' 
+        ? 'bg-primary/20 text-primary' 
+        : 'bg-gradient-to-tr from-purple-500 to-blue-500 text-white'
+    )}>
+      <AvatarFallback className="bg-transparent">
         {role === "user" ? (
-          <User className="text-primary-foreground" />
+          <User className="h-5 w-5" />
         ) : (
-          <Bot className="text-card-foreground" />
+          <Sparkles className="h-5 w-5" />
         )}
       </AvatarFallback>
     </Avatar>

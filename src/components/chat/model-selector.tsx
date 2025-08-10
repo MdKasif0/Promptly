@@ -16,6 +16,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { MODEL_DATA, type ModelId } from "@/lib/models";
+import { ChevronDown, Sparkles } from "lucide-react";
 
 interface ModelSelectorProps {
   model: ModelId;
@@ -23,12 +24,16 @@ interface ModelSelectorProps {
 }
 
 export function ModelSelector({ model, setModel }: ModelSelectorProps) {
+  const selectedModelData = Object.values(MODEL_DATA).flatMap(c => c.models).find(m => m.id === model);
+
   return (
     <Select value={model} onValueChange={(value) => setModel(value as ModelId)}>
-      <SelectTrigger className="w-48">
+      <SelectTrigger className="w-auto h-auto bg-transparent border-none focus:ring-0 focus:ring-offset-0 gap-2 px-3 py-1.5 rounded-full hover:bg-muted/50">
+        <Sparkles className="h-4 w-4 text-primary" />
         <SelectValue placeholder="Select a model" />
+        <ChevronDown className="h-4 w-4 opacity-50" />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="max-h-[80vh]">
         <TooltipProvider delayDuration={100}>
           {Object.entries(MODEL_DATA).map(([categoryId, category]) => (
             <SelectGroup key={categoryId}>

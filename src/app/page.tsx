@@ -6,7 +6,7 @@ import { ChatLayout } from "@/components/chat/chat-layout";
 import type { Message, ChatSession } from "@/lib/types";
 import { sendMessageAction } from "./actions";
 import { useToast } from "@/hooks/use-toast";
-import { getModelById, type ModelId } from "@/lib/models";
+import { getModelById, type ModelId, ALL_MODELS } from "@/lib/models";
 
 export default function ChatPage() {
   const { toast } = useToast();
@@ -29,7 +29,7 @@ export default function ChatPage() {
         setActiveChatId(JSON.parse(savedActiveChatId));
       }
       const savedModel = localStorage.getItem("selectedModel");
-      if (savedModel) {
+      if (savedModel && ALL_MODELS.find(m => m.id === JSON.parse(savedModel))) {
         setModel(JSON.parse(savedModel));
       }
     } catch (e) {
@@ -53,7 +53,11 @@ export default function ChatPage() {
         localStorage.setItem("activeChatId", JSON.stringify(activeChatId));
         const activeChat = chatHistory.find((chat) => chat.id === activeChatId);
         setMessages(activeChat?.messages || []);
-        setModel(activeChat?.modelId || "gemini-2.5-flash");
+        if (activeChat?.modelId && ALL_MODELS.find(m => m.id === activeChat.modelId)) {
+          setModel(activeChat?.modelId);
+        } else {
+            setModel("gemini-2.5-flash");
+        }
       } else {
         setMessages([]);
         localStorage.removeItem("activeChatId");

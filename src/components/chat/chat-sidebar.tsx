@@ -9,10 +9,21 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { PlusSquare, MessageSquare } from "lucide-react";
+import { PlusSquare, MessageSquare, Trash2 } from "lucide-react";
 import type { ChatSession } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 interface ChatSidebarProps {
   history: ChatSession[];
@@ -27,6 +38,12 @@ export function ChatSidebar({
   onSwitchChat,
   onNewChat,
 }: ChatSidebarProps) {
+
+  const handleDeleteChat = (e: React.MouseEvent, chatId: string) => {
+    e.stopPropagation();
+    // Placeholder for delete logic
+    console.log("Delete chat:", chatId);
+  }
   return (
     <Sidebar>
       <SidebarHeader>
@@ -41,11 +58,11 @@ export function ChatSidebar({
         <SidebarMenu>
           {history.length > 0 ? (
             history.map((chat) => (
-              <SidebarMenuItem key={chat.id}>
+              <SidebarMenuItem key={chat.id} className="group/item">
                 <SidebarMenuButton
                   onClick={() => onSwitchChat(chat.id)}
                   isActive={activeChatId === chat.id}
-                  className="h-auto py-2"
+                  className="h-auto py-2 pr-10"
                   tooltip={{
                     children: chat.title,
                     side: "right"
@@ -59,6 +76,25 @@ export function ChatSidebar({
                     </span>
                   </div>
                 </SidebarMenuButton>
+                 <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                     <Button variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover/item:opacity-100">
+                        <Trash2 size={16} />
+                     </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete this chat session.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={(e) => handleDeleteChat(e, chat.id)}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </SidebarMenuItem>
             ))
           ) : (
