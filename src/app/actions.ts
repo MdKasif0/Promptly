@@ -24,8 +24,17 @@ const getErrorMessage = (err: any): string => {
   if (typeof err === 'string') return err;
   if (err.message) return err.message;
   if (err.details) return JSON.stringify(err.details);
-  return JSON.stringify(err);
+  if (err.error?.message) return err.error.message;
+  if (typeof err === 'object') {
+    try {
+      return JSON.stringify(err, null, 2);
+    } catch {
+      // fallback
+    }
+  }
+  return String(err);
 };
+
 
 const isRateLimitError = (errorMessage: string): boolean => {
     const lowerCaseError = errorMessage.toLowerCase();
@@ -51,7 +60,9 @@ export async function sendMessageAction(
       if (msg.image) {
         parts.push({ media: { url: msg.image } });
       }
-      return [{ role: msg.role === 'user' ? 'user' : 'model', parts }];
+      return [
+        { role: msg.role === 'user' ? 'user' : 'model', parts }
+      ];
     }
   );
 
