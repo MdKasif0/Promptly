@@ -5,7 +5,7 @@
 import * as React from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Mic, SendHorizontal, Expand, Shrink } from "lucide-react";
+import { Mic, SendHorizontal } from "lucide-react";
 import Image from 'next/image';
 import { getModelById, type ModelId } from "@/lib/models";
 import { cn } from "@/lib/utils";
@@ -60,7 +60,6 @@ export function ChatInput({
   const router = useRouter();
   const [isVisionModel, setIsVisionModel] = React.useState(false);
   const [isOptionsOpen, setIsOptionsOpen] = React.useState(false);
-  const [isFullScreen, setIsFullScreen] = React.useState(false);
 
   const hasInput = input.trim().length > 0 || image !== null;
 
@@ -91,7 +90,6 @@ export function ChatInput({
     e.preventDefault();
     if (!input.trim() && !image) return;
     handleSendMessage(input, image);
-    if(isFullScreen) setIsFullScreen(false);
   };
 
   const handleMicClick = () => {
@@ -103,46 +101,20 @@ export function ChatInput({
       inputRef.current.style.height = 'auto';
       inputRef.current.style.height = `${inputRef.current.scrollHeight}px`;
     }
-  }, [input, isFullScreen]);
+  }, [input]);
 
   React.useEffect(() => {
     if (inputRef.current) {
         inputRef.current.focus();
     }
-  }, [isLoading, isFullScreen]);
+  }, [isLoading]);
   
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey && hasInput && !isFullScreen) {
+    if (e.key === 'Enter' && !e.shiftKey && hasInput) {
       e.preventDefault();
       handleSubmit(e);
     }
   };
-
-  if (isFullScreen) {
-    return (
-      <div className="fixed inset-0 bg-background z-50 flex flex-col p-4">
-        <div className="flex justify-end">
-            <Button variant="ghost" size="icon" className="h-12 w-12" onClick={() => setIsFullScreen(false)}>
-              <Shrink />
-           </Button>
-        </div>
-        <Textarea
-          ref={inputRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask anything..."
-          className="flex-1 w-full bg-transparent border-none text-lg resize-none focus-visible:ring-0 focus-visible:ring-offset-0"
-          autoFocus
-        />
-        <div className="flex justify-end gap-2 mt-4">
-           <Button size="lg" className="rounded-full h-12 px-6 bg-white text-black hover:bg-gray-200" onClick={handleSubmit}>
-              <SendHorizontal className="mr-2 h-5 w-5"/>
-              Send
-           </Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full max-w-2xl mx-auto p-4">
@@ -192,11 +164,6 @@ export function ChatInput({
               onKeyDown={handleKeyDown}
               disabled={isLoading}
             />
-            {hasInput && (
-                 <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 text-muted-foreground" onClick={() => setIsFullScreen(true)}>
-                    <Expand />
-                 </Button>
-            )}
             <div className="flex items-center gap-1 self-end">
                <Button type="button" variant="ghost" size="icon" className="rounded-full h-10 w-10" disabled={isLoading} onClick={handleMicClick}>
                  <Mic className="text-muted-foreground" />
