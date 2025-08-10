@@ -6,14 +6,14 @@ import { ChatLayout } from "@/components/chat/chat-layout";
 import type { Message, ChatSession } from "@/lib/types";
 import { sendMessageAction } from "./actions";
 import { useToast } from "@/hooks/use-toast";
-import { ALL_MODELS, type ModelId } from "@/lib/models";
+import { getModelById, type ModelId } from "@/lib/models";
 
 export default function ChatPage() {
   const { toast } = useToast();
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [activeChatId, setActiveChatId] = React.useState<string | null>(null);
   const [chatHistory, setChatHistory] = React.useState<ChatSession[]>([]);
-  const [model, setModel] = React.useState<ModelId>("gemini-2.5-pro");
+  const [model, setModel] = React.useState<ModelId>("gemini-2.5-flash");
   const [isLoading, setIsLoading] = React.useState(false);
   const [input, setInput] = React.useState("");
   const [image, setImage] = React.useState<string | null>(null);
@@ -27,6 +27,10 @@ export default function ChatPage() {
       const savedActiveChatId = localStorage.getItem("activeChatId");
       if (savedActiveChatId) {
         setActiveChatId(JSON.parse(savedActiveChatId));
+      }
+      const savedModel = localStorage.getItem("selectedModel");
+      if (savedModel) {
+        setModel(JSON.parse(savedModel));
       }
     } catch (e) {
       console.error("Failed to load from localStorage", e);
@@ -47,7 +51,7 @@ export default function ChatPage() {
         localStorage.setItem("activeChatId", JSON.stringify(activeChatId));
         const activeChat = chatHistory.find((chat) => chat.id === activeChatId);
         setMessages(activeChat?.messages || []);
-        setModel(activeChat?.modelId || "gemini-2.5-pro");
+        setModel(activeChat?.modelId || "gemini-2.5-flash");
       } else {
         setMessages([]);
         localStorage.removeItem("activeChatId");
@@ -56,6 +60,20 @@ export default function ChatPage() {
       console.error("Failed to manage active chat", e);
     }
   }, [activeChatId, chatHistory]);
+  
+  const handleSetModel = (newModel: ModelId) => {
+    setModel(newModel);
+    try {
+      localStorage.setItem("selectedModel", JSON.stringify(newModel));
+      if (activeChatId) {
+        setChatHistory(prev => prev.map(chat => 
+          chat.id === activeChatId ? { ...chat, modelId: newModel } : chat
+        ));
+      }
+    } catch(e) {
+       console.error("Failed to save model to localStorage", e);
+    }
+  }
 
   const addMessage = (message: Message) => {
     setMessages((prev) => [...prev, message]);
@@ -72,6 +90,18 @@ export default function ChatPage() {
 
   const handleSendMessage = async (messageContent: string, imageUrl: string | null) => {
     if (isLoading) return;
+    
+    const selectedModel = getModelById(model);
+    if (imageUrl && !selectedModel?.capabilities.includes("Vision")) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "The selected model does not support image inputs. Please select a vision model.",
+        });
+        setImage(null);
+        return;
+    }
+
 
     const newUserMessage: Message = {
       id: nanoid(),
@@ -164,7 +194,7 @@ export default function ChatPage() {
   const startNewChat = () => {
     setActiveChatId(null);
     setMessages([]);
-    setModel("gemini-2.5-pro");
+    setModel("gemini-2.5-flash");
   };
 
   const switchChat = (chatId: string) => {
@@ -179,7 +209,7 @@ export default function ChatPage() {
         onSwitchChat={switchChat}
         onNewChat={startNewChat}
         model={model}
-        setModel={setModel}
+        setModel={handleSetModel}
         messages={messages}
         input={input}
         setInput={setInput}

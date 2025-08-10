@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Image as ImageIcon, Send, X } from "lucide-react";
 import Image from 'next/image';
+import { getModelById, type ModelId } from "@/lib/models";
 
 interface ChatInputProps {
   input: string;
@@ -13,6 +14,7 @@ interface ChatInputProps {
   isLoading: boolean;
   image: string | null;
   setImage: (image: string | null) => void;
+  model: ModelId;
 }
 
 export function ChatInput({
@@ -21,10 +23,23 @@ export function ChatInput({
   handleSendMessage,
   isLoading,
   image,
-  setImage
+  setImage,
+  model
 }: ChatInputProps) {
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [isVisionModel, setIsVisionModel] = React.useState(false);
+
+  React.useEffect(() => {
+    const selectedModel = getModelById(model);
+    setIsVisionModel(selectedModel?.capabilities.includes("Vision") || false);
+  }, [model]);
+
+  React.useEffect(() => {
+    if (!isVisionModel) {
+      setImage(null);
+    }
+  }, [isVisionModel, setImage]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -81,23 +96,27 @@ export function ChatInput({
           disabled={isLoading}
         />
         <div className="absolute bottom-2.5 right-4 flex items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isLoading}
-          >
-            <ImageIcon className="text-muted-foreground" />
-            <span className="sr-only">Upload Image</span>
-          </Button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden"
-            accept="image/*"
-            onChange={handleImageUpload}
-          />
+          {isVisionModel && (
+            <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading}
+            >
+              <ImageIcon className="text-muted-foreground" />
+              <span className="sr-only">Upload Image</span>
+            </Button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={handleImageUpload}
+            />
+            </>
+          )}
           <Button type="submit" size="icon" disabled={isLoading || (!input.trim() && !image)} className="bg-accent text-accent-foreground hover:bg-accent/90">
             <Send />
             <span className="sr-only">Send</span>

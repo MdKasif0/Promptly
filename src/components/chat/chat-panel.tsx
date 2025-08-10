@@ -37,6 +37,7 @@ export function ChatPanel(props: ChatPanelProps) {
         isLoading={props.isLoading}
         image={props.image}
         setImage={props.setImage}
+        model={props.model}
       />
     </div>
   );

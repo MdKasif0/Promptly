@@ -40,6 +40,9 @@ export function ModelSelector({ model, setModel }: ModelSelectorProps) {
                   </TooltipTrigger>
                   <TooltipContent side="right" className="max-w-xs">
                     <p className="font-bold">{m.name}</p>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      <span className="font-semibold text-foreground">Category: </span>{category.label}
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       {m.description}
                     </p>
