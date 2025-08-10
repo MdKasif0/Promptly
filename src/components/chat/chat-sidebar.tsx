@@ -53,7 +53,6 @@ export function ChatSidebar({
   onNewChat,
   onDeleteChat,
 }: ChatSidebarProps) {
-  const { toggleSidebar } = useSidebar();
 
   const handleDeleteChat = (e: React.MouseEvent, chatId: string) => {
     e.stopPropagation();

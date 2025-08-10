@@ -209,7 +209,6 @@ const Sidebar = React.forwardRef<
             <SheetTitle className="sr-only">Chat History</SheetTitle>
             <div className="flex h-full w-full flex-col">
               {children}
-              <SidebarClose />
             </div>
           </SheetContent>
         </Sheet>
