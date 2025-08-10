@@ -4,13 +4,13 @@ import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { Message } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { ChatAvatar } from "./chat-avatar";
 import Image from 'next/image';
 import { Button } from "@/components/ui/button";
-import { Copy } from "lucide-react";
+import { Copy, ThumbsUp, ThumbsDown, Volume2, RotateCw, Share2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useToast } from "@/hooks/use-toast";
+import { ChatAvatar } from "./chat-avatar";
 
 interface ChatMessagesProps {
   messages: Message[];
@@ -54,7 +54,7 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
   }, [messages, isLoading]);
 
   return (
-    <div ref={scrollableContainerRef} className="h-full space-y-6 overflow-y-auto px-4 pt-20 pb-28">
+    <div ref={scrollableContainerRef} className="h-full space-y-8 overflow-y-auto px-4 pt-20 pb-28">
       <AnimatePresence>
         {messages.map((message) => (
           <motion.div
@@ -65,21 +65,20 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
             exit={{ opacity: 0, y: -20 }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
             className={cn(
-              "group relative flex gap-3", 
+              "group relative flex w-full",
               message.role === 'user' ? 'justify-end' : 'justify-start'
             )}
           >
-            {message.role === "assistant" && <ChatAvatar role="assistant" />}
             <div className={cn(
               "flex flex-col gap-2 max-w-[80%]", 
               message.role === "user" ? "items-end" : "items-start"
             )}>
                 <div
                   className={cn(
-                    "relative rounded-xl px-4 py-3 prose prose-sm dark:prose-invert prose-p:leading-relaxed prose-a:text-accent-foreground prose-a:underline prose-code:before:content-none prose-code:after:content-none prose-code:bg-muted prose-code:text-muted-foreground prose-code:rounded-md prose-code:px-1.5 prose-code:py-1",
+                    "relative prose prose-sm dark:prose-invert prose-p:leading-relaxed prose-a:text-accent-foreground prose-a:underline prose-code:before:content-none prose-code:after:content-none prose-code:bg-muted prose-code:text-muted-foreground prose-code:rounded-md prose-code:px-1.5 prose-code:py-1",
                     message.role === "user"
-                      ? "bg-primary text-primary-foreground rounded-br-none"
-                      : "bg-card text-card-foreground rounded-bl-none"
+                      ? "bg-primary text-primary-foreground rounded-3xl px-4 py-3"
+                      : "bg-transparent text-card-foreground"
                   )}
                 >
                   {message.image && (
@@ -98,17 +97,28 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
                     </MemoizedReactMarkdown>
                 </div>
                  {message.role === "assistant" && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
-                    onClick={() => handleCopy(message.content)}
-                  >
-                    <Copy size={16} />
-                  </Button>
+                   <div className="flex items-center gap-2 text-muted-foreground">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopy(message.content)}>
+                        <Copy size={16} />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7">
+                        <ThumbsUp size={16} />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7">
+                        <ThumbsDown size={16} />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7">
+                        <Volume2 size={16} />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7">
+                        <RotateCw size={16} />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7">
+                        <Share2 size={16} />
+                      </Button>
+                   </div>
                 )}
             </div>
-            {message.role === "user" && <ChatAvatar role="user" />}
           </motion.div>
         ))}
         {isLoading && (
