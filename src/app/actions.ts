@@ -1,11 +1,7 @@
 
 "use server";
 
-import { generate } from "genkit";
-import handleApiErrorWithLLM from "@/ai/flows/handle-api-error-with-llm";
-import { ALL_MODELS, getModelById, type ModelId } from "@/lib/models";
 import type { Message } from "@/lib/types";
-import {Part} from "genkit/content";
 
 interface SendMessagePayload {
   message: string;
@@ -22,18 +18,8 @@ interface ActionResult {
 
 const getErrorMessage = (err: any): string => {
   if (typeof err === 'string') return err;
-  if (err instanceof Error) {
-    if (err.cause) {
-        try {
-            // Attempt to parse the cause as JSON, which is common for API errors
-            const cause = JSON.parse(String(err.cause));
-            if (cause.error?.message) return cause.error.message;
-        } catch {}
-    }
-    return err.message;
-  }
+  if (err instanceof Error) return err.message;
   if (err.message) return err.message;
-  if (err.details) return JSON.stringify(err.details);
   if (err.error?.message) return err.error.message;
   if (typeof err === 'object') {
     try {
@@ -43,16 +29,8 @@ const getErrorMessage = (err: any): string => {
       // fallback
     }
   }
-  return String(err);
+  return "An unknown error occurred.";
 };
-
-
-const isRateLimitError = (errorMessage: string): boolean => {
-    const lowerCaseError = errorMessage.toLowerCase();
-    return lowerCaseError.includes("rate limit") || 
-           lowerCaseError.includes("quota") || 
-           lowerCaseError.includes("too many requests");
-}
 
 export async function sendMessageAction(
   payload: SendMessagePayload
@@ -61,105 +39,57 @@ export async function sendMessageAction(
     return { success: false, error: "Model not selected. Please select a model to start." };
   }
   
-  const modelInfo = getModelById(payload.model as ModelId);
-  if (!modelInfo) {
-    return { success: false, error: "Model not found." };
-  }
-  
-  const historyParts: Part[] = payload.history.flatMap((msg): Part[] => {
-    const contentParts: Part[] = [{ text: msg.content }];
+  const history = payload.history.map(msg => {
+    const content = [{ type: "text", text: msg.content }];
     if (msg.image) {
-      contentParts.push({ media: { url: msg.image } });
+      content.push({ type: "image_url", image_url: { url: msg.image } });
     }
-    return [{ role: msg.role === 'user' ? 'user' : 'model', parts: contentParts }];
+    return { role: msg.role, content };
   });
 
-  const messageParts: Part[] = [{ text: payload.message }];
+  const userMessageContent = [{ type: "text", text: payload.message }];
   if (payload.image) {
-    messageParts.push({ media: { url: payload.image } });
+    userMessageContent.push({ type: "image_url", image_url: { url: payload.image } });
   }
 
-  const modelId = payload.model;
-  
-  const config = {
-    apiKey: process.env.OPENROUTER_API_KEY,
-    baseUrl: "https://openrouter.ai/api/v1",
-  };
-  
+  const messages = [
+    ...history,
+    { role: "user", content: userMessageContent }
+  ];
+
   try {
-    const response = await generate({
-      model: modelId,
-      prompt: {
-        messages: [
-          ...historyParts,
-          { role: "user", parts: messageParts },
-        ],
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`
       },
-      config: config
+      body: JSON.stringify({
+        model: payload.model,
+        messages: messages,
+      }),
     });
 
-    const aiResponse = response.text;
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || `API request failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
+    const aiResponse = data.choices[0]?.message?.content;
+
+    if (!aiResponse) {
+        return { success: false, error: "The AI did not return a response. Please try again." };
+    }
+
     return { success: true, message: aiResponse };
 
   } catch (err: any) {
+    console.error("API call failed:", err);
     const errorMessage = getErrorMessage(err);
-    console.error("API call failed:", errorMessage);
-
-    if (isRateLimitError(errorMessage)) {
-        return {
-            success: false,
-            error: `You've hit the rate limit for ${modelInfo.name}. Please try again later or select a different model.`
-        }
-    }
-
-    try {
-      const decision = await handleApiErrorWithLLM({
-        errorMessage: errorMessage,
-        originalPrompt: payload.message,
-        availableModels: ALL_MODELS,
-        currentModel: payload.model,
-      });
-
-      if (decision.shouldRetry && decision.newModel) {
-        const retryModelInfo = getModelById(decision.newModel as ModelId);
-        if (!retryModelInfo) {
-          return { success: false, error: `AI tried to use a model that doesn't exist: ${decision.newModel}. Please try again.` };
-        }
-        
-        const retryModelId = retryModelInfo.id;
-        const retryPrompt = decision.updatedPrompt || payload.message;
-        const retryMessageParts: Part[] = [{ text: retryPrompt }];
-        if (payload.image) {
-            retryMessageParts.push({ media: { url: payload.image } });
-        }
-
-        const retryResponse = await generate({
-            model: retryModelId,
-            prompt: {
-              messages: [
-                ...historyParts,
-                { role: "user", parts: retryMessageParts },
-              ],
-            },
-            config: config,
-          });
-
-        const aiResponse = retryResponse.text;
-        return { success: true, message: `(Retried with ${retryModelInfo.name}) ${aiResponse}` };
-
-      } else {
-        return {
-          success: false,
-          error: `The AI decided not to retry. Reason: ${decision.reason}`,
-        };
-      }
-    } catch (e: any) {
-      const finalErrorMessage = getErrorMessage(e);
-      console.error("AI error handler failed:", finalErrorMessage);
-      return {
-        success: false,
-        error: `An unexpected error occurred. The AI error handler failed with: ${finalErrorMessage}`,
-      };
-    }
+    return {
+      success: false,
+      error: `An unexpected error occurred: ${errorMessage}`,
+    };
   }
 }
