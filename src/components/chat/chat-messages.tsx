@@ -64,12 +64,12 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className="group relative flex items-start gap-3 w-full"
+            className={cn("group relative flex items-start gap-3", message.role === 'user' ? 'justify-end' : '')}
           >
             {message.role === "assistant" && <ChatAvatar role="assistant" />}
             <div className={cn(
               "flex flex-col gap-2 max-w-2xl", 
-              message.role === "user" ? "ml-auto items-end" : "mr-auto items-start"
+              message.role === "user" ? "items-end" : "items-start"
             )}>
                 <div
                   className={cn(
