@@ -10,7 +10,6 @@ import { Copy, ThumbsUp, ThumbsDown, Volume2, RotateCw, Share2 } from "lucide-re
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useToast } from "@/hooks/use-toast";
-import { ChatAvatar } from "./chat-avatar";
 
 interface ChatMessagesProps {
   messages: Message[];
@@ -126,9 +125,8 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
             layout
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-start gap-3"
+            className="flex justify-start"
           >
-            <ChatAvatar role="assistant" />
             <div className="rounded-xl bg-card px-4 py-3">
               <LoadingIndicator />
             </div>
