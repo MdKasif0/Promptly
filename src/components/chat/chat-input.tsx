@@ -4,11 +4,12 @@
 import * as React from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Mic, Image as ImageIcon } from "lucide-react";
+import { Mic, Image as ImageIcon, SendHorizontal } from "lucide-react";
 import Image from 'next/image';
 import { getModelById, type ModelId } from "@/lib/models";
 import { cn } from "@/lib/utils";
 import { MoreOptionsMenu } from "./more-options-menu";
+import { useRouter } from 'next/navigation';
 
 interface ChatInputProps {
   input: string;
@@ -42,8 +43,11 @@ export function ChatInput({
 }: ChatInputProps) {
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const router = useRouter();
   const [isVisionModel, setIsVisionModel] = React.useState(false);
   const [isOptionsOpen, setIsOptionsOpen] = React.useState(false);
+
+  const hasInput = input.trim().length > 0 || image !== null;
 
   React.useEffect(() => {
     const selectedModel = getModelById(model);
@@ -72,6 +76,10 @@ export function ChatInput({
     e.preventDefault();
     if (!input.trim() && !image) return;
     handleSendMessage(input, image);
+  };
+
+  const handleMicClick = () => {
+    router.push('/voice');
   };
   
   React.useEffect(() => {
@@ -126,7 +134,7 @@ export function ChatInput({
               className="bg-transparent border-none rounded-full pr-24 pl-4 py-2 h-12 text-base resize-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
               rows={1}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
+                if (e.key === 'Enter' && !e.shiftKey && hasInput) {
                   e.preventDefault();
                   handleSubmit(e);
                 }
@@ -138,10 +146,17 @@ export function ChatInput({
                  <Mic className="text-muted-foreground" />
                  <span className="sr-only">Use microphone</span>
                </Button>
-               <Button type="submit" size="icon" disabled={isLoading || (!input.trim() && !image)} className="rounded-full h-10 w-10 shrink-0 bg-white text-black hover:bg-gray-200">
-                  <SoundWaveIcon />
-                  <span className="sr-only">Send</span>
-                </Button>
+                {hasInput ? (
+                    <Button type="submit" size="icon" disabled={isLoading} className="rounded-full h-10 w-10 shrink-0 bg-white text-black hover:bg-gray-200">
+                        <SendHorizontal className="h-5 w-5" />
+                        <span className="sr-only">Send</span>
+                    </Button>
+                ) : (
+                    <Button type="button" size="icon" onClick={handleMicClick} disabled={isLoading} className="rounded-full h-10 w-10 shrink-0 bg-white text-black hover:bg-gray-200">
+                        <SoundWaveIcon />
+                        <span className="sr-only">Voice Input</span>
+                    </Button>
+                )}
              </div>
           </div>
         </div>
@@ -149,4 +164,3 @@ export function ChatInput({
     </div>
   );
 }
-
