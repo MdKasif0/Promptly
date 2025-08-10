@@ -27,7 +27,8 @@ const getErrorMessage = (err: any): string => {
   if (err.error?.message) return err.error.message;
   if (typeof err === 'object') {
     try {
-      return JSON.stringify(err, null, 2);
+      const stringified = JSON.stringify(err, null, 2);
+      if (stringified !== '{}') return stringified;
     } catch {
       // fallback
     }
@@ -51,8 +52,6 @@ export async function sendMessageAction(
   if (!modelInfo) {
     return { success: false, error: "Model not found." };
   }
-
-  const modelId = modelInfo.provider === "Gemini" ? `googleai/${modelInfo.id}` : modelInfo.id;
   
   const historyParts: Part[] = payload.history.flatMap(
     (msg): Part[] => {
@@ -70,6 +69,8 @@ export async function sendMessageAction(
   if (payload.image) {
     messageParts.push({ media: { url: payload.image } });
   }
+  
+  const modelId = modelInfo.provider === "Gemini" ? `googleai/${modelInfo.id}` : modelInfo.id;
 
   const getConfig = (provider: string) => {
     if (provider === "OpenRouter") {
