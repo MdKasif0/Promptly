@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -8,7 +9,6 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,9 @@ import {
   Library,
   Sparkles,
   ChevronDown,
-  MessageSquarePlus
+  MoreHorizontal,
+  Pencil,
+  Archive as ArchiveIcon,
 } from "lucide-react";
 import type { ChatSession } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -37,6 +39,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ChatSidebarProps {
   history: ChatSession[];
@@ -123,15 +131,35 @@ export function ChatSidebar({
                   </div>
                 </SidebarMenuButton>
                 <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover/item:opacity-100"
-                    >
-                      <Trash2 size={16} />
-                    </Button>
-                  </AlertDialogTrigger>
+                  <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                         <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover/item:opacity-100"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreHorizontal size={16} />
+                          </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent side="right" align="start" onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenuItem>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          <span>Rename</span>
+                        </DropdownMenuItem>
+                         <DropdownMenuItem>
+                           <ArchiveIcon className="mr-2 h-4 w-4" />
+                           <span>Archive</span>
+                        </DropdownMenuItem>
+                        <AlertDialogTrigger asChild>
+                           <DropdownMenuItem className="text-destructive">
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              <span>Delete</span>
+                            </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                      </DropdownMenuContent>
+                  </DropdownMenu>
+
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>
