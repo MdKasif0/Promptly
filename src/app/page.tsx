@@ -8,12 +8,14 @@ import { sendMessageAction } from "./actions";
 import { useToast } from "@/hooks/use-toast";
 import { getModelById, type ModelId, ALL_MODELS } from "@/lib/models";
 
+const DEFAULT_MODEL: ModelId = "deepseek/deepseek-r1-0528:free";
+
 export default function ChatPage() {
   const { toast } = useToast();
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [activeChatId, setActiveChatId] = React.useState<string | null>(null);
   const [chatHistory, setChatHistory] = React.useState<ChatSession[]>([]);
-  const [model, setModel] = React.useState<ModelId>("gemini-2.5-flash");
+  const [model, setModel] = React.useState<ModelId>(DEFAULT_MODEL);
   const [isLoading, setIsLoading] = React.useState(false);
   const [input, setInput] = React.useState("");
   const [image, setImage] = React.useState<string | null>(null);
@@ -56,9 +58,9 @@ export default function ChatPage() {
         const activeChat = chatHistory.find((chat) => chat.id === activeChatId);
         setMessages(activeChat?.messages || []);
         if (activeChat?.modelId && ALL_MODELS.find(m => m.id === activeChat.modelId)) {
-          setModel(activeChat?.modelId);
+          setModel(activeChat.modelId);
         } else {
-            setModel("gemini-2.5-flash");
+            setModel(DEFAULT_MODEL);
         }
       } else {
         setMessages([]);
@@ -180,7 +182,7 @@ export default function ChatPage() {
   const startNewChat = () => {
     setActiveChatId(null);
     setMessages([]);
-    setModel("gemini-2.5-flash");
+    setModel(DEFAULT_MODEL);
     localStorage.removeItem("activeChatId");
   };
 

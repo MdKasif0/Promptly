@@ -23,13 +23,6 @@ export const MODEL_DATA = {
         capabilities: ["Text", "Logic"],
         provider: "OpenRouter",
       },
-      {
-        id: "gemini-2.5-pro",
-        name: "Gemini 2.5 Pro",
-        description: "Google's powerful model for reasoning and general tasks.",
-        capabilities: ["Text", "Logic", "General", "Vision"],
-        provider: "Gemini",
-      },
     ],
   },
   coding: {
@@ -66,13 +59,6 @@ export const MODEL_DATA = {
   general: {
     label: "General",
     models: [
-      {
-        id: "gemini-2.5-flash",
-        name: "Gemini 2.5 Flash",
-        description: "Google's fast and lightweight model.",
-        capabilities: ["General", "Fast", "Vision"],
-        provider: "Gemini",
-      },
       {
         id: "deepseek/deepseek-chat-v3-0324:free",
         name: "DeepSeek Chat v3",

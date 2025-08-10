@@ -70,21 +70,11 @@ export async function sendMessageAction(
     messageParts.push({ media: { url: payload.image } });
   }
   
-  const modelId = modelInfo.provider === "Gemini" ? `googleai/${modelInfo.id}` : modelInfo.id;
+  const modelId = modelInfo.id;
 
-  const getConfig = (provider: string) => {
-    if (provider === "OpenRouter") {
-      return {
-        apiKey: process.env.OPENROUTER_API_KEY,
-        baseUrl: "https://openrouter.ai/api/v1",
-      };
-    }
-    if (provider === "Gemini") {
-      return {
-        apiKey: process.env.GEMINI_API_KEY,
-      };
-    }
-    return undefined;
+  const config = {
+    apiKey: process.env.OPENROUTER_API_KEY,
+    baseUrl: "https://openrouter.ai/api/v1",
   };
   
   try {
@@ -97,7 +87,7 @@ export async function sendMessageAction(
           { role: "user", parts: messageParts },
         ],
       },
-      config: getConfig(modelInfo.provider)
+      config: config
     });
 
     const aiResponse = response.text;
@@ -128,7 +118,7 @@ export async function sendMessageAction(
           return { success: false, error: `AI tried to use a model that doesn't exist: ${decision.newModel}. Please try again.` };
         }
         
-        const retryModelId = retryModelInfo.provider === "Gemini" ? `googleai/${retryModelInfo.id}` : retryModelInfo.id;
+        const retryModelId = retryModelInfo.id;
         const retryPrompt = decision.updatedPrompt || payload.message;
         const retryMessageParts: Part[] = [{ text: retryPrompt }];
         if (payload.image) {
@@ -144,7 +134,7 @@ export async function sendMessageAction(
                 { role: "user", parts: retryMessageParts },
               ],
             },
-            config: getConfig(retryModelInfo.provider),
+            config: config,
           });
 
         const aiResponse = retryResponse.text;

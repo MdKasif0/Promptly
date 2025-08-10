@@ -41,7 +41,7 @@ const prompt = ai.definePrompt({
   name: 'handleApiErrorWithLLMPrompt',
   input: {schema: HandleApiErrorWithLLMInputSchema},
   output: {schema: HandleApiErrorWithLLMOutputSchema},
-  prompt: `You are an AI assistant responsible for handling API errors and determining if a request should be retried with a different model or an updated prompt.
+  prompt: `You are an AI assistant responsible for handling API errors and determining if a request should be retried with a different model or an updated prompt. You are interacting with the OpenRouter API.
 
 You received the following error message: "{{errorMessage}}"
 
