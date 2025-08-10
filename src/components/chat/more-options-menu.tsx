@@ -3,8 +3,6 @@
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -29,19 +27,6 @@ interface MoreOptionsMenuProps {
   setInput: (input: string) => void;
   fileInputRef: React.RefObject<HTMLInputElement>;
 }
-
-const suggestionMessages = [
-  {
-    icon: Sparkles,
-    text: "Create image",
-    message: "Create an image of a futuristic city at sunset",
-  },
-  {
-    icon: FileText,
-    text: "Summarize text",
-    message: "Summarize the latest news on AI development.",
-  },
-];
 
 const fileOptions = [
   { icon: Camera, text: "Camera" },
@@ -84,28 +69,7 @@ export function MoreOptionsMenu({
         side="bottom"
         className="bg-[#1C1C1E] text-white border-none rounded-t-3xl w-full max-w-3xl mx-auto h-[90vh] flex flex-col p-0"
       >
-        <SheetHeader className="p-6 text-center">
-          <SheetTitle className="text-3xl font-bold tracking-tight">
-            What can I help with?
-          </SheetTitle>
-        </SheetHeader>
-        <div className="flex-1 overflow-y-auto px-6 pb-6">
-            <div className="flex justify-center gap-3 mb-6">
-                {suggestionMessages.map((item, index) => (
-                <Button
-                    key={index}
-                    variant="outline"
-                    className="h-auto justify-start text-left py-2 px-4 rounded-full border-gray-600 hover:bg-gray-700 text-base bg-transparent"
-                    onClick={() => handleAdvancedOptionClick(item.message)}
-                >
-                    <div className="flex items-center gap-2">
-                    <item.icon size={18} />
-                    <span>{item.text}</span>
-                    </div>
-                </Button>
-                ))}
-            </div>
-
+        <div className="flex-1 overflow-y-auto px-6 pb-6 pt-8">
             <div className="grid grid-cols-3 gap-4 mb-6">
             {fileOptions.map((item, index) => (
                 <button
