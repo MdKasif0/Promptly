@@ -51,10 +51,7 @@ export async function sendMessageAction(
       if (msg.image) {
         parts.push({ media: { url: msg.image } });
       }
-      // Correctly return user and model roles
-      return msg.role === 'user' 
-        ? [{ role: 'user', parts }]
-        : [{ role: 'model', parts }];
+      return [{ role: msg.role === 'user' ? 'user' : 'model', parts }];
     }
   );
 
@@ -91,7 +88,7 @@ export async function sendMessageAction(
       config: getConfig(modelInfo.provider)
     });
 
-    const aiResponse = response.text();
+    const aiResponse = response.text;
     return { success: true, message: aiResponse };
 
   } catch (err: any) {
@@ -138,7 +135,7 @@ export async function sendMessageAction(
             config: getConfig(retryModelInfo.provider),
           });
 
-        const aiResponse = retryResponse.text();
+        const aiResponse = retryResponse.text;
         return { success: true, message: `(Retried with ${retryModelInfo.name}) ${aiResponse}` };
 
       } else {
