@@ -1,7 +1,7 @@
 "use server";
 
 import { generate } from "genkit";
-import handleApiErrorWithLLM from "@/ai/flows/handle-api-error-with-llm";
+import handleApiErrorWithLLM, { type HandleApiErrorWithLLMInput } from "@/ai/flows/handle-api-error-with-llm";
 import { ALL_MODELS, getModelById, type ModelId } from "@/lib/models";
 import type { Message } from "@/lib/types";
 import {Part} from "genkit/content";
@@ -45,6 +45,21 @@ export async function sendMessageAction(
     messageParts.push({ media: { url: payload.image } });
   }
 
+  const getConfig = (provider: string) => {
+    if (provider === "OpenRouter") {
+      return {
+        apiKey: process.env.OPENROUTER_API_KEY,
+        baseUrl: "https://openrouter.ai/api/v1",
+      };
+    }
+    if (provider === "Gemini") {
+      return {
+        apiKey: process.env.GEMINI_API_KEY,
+      };
+    }
+    return undefined;
+  };
+  
   try {
     const response = await generate({
       model: modelId,
@@ -54,13 +69,7 @@ export async function sendMessageAction(
           { role: "user", parts: messageParts },
         ],
       },
-      config:
-        modelInfo.provider === "OpenRouter"
-          ? {
-              apiKey: process.env.OPENROUTER_API_KEY,
-              baseUrl: "https://openrouter.ai/api/v1",
-            }
-          : undefined,
+      config: getConfig(modelInfo.provider)
     });
 
     const aiResponse = response.text();
@@ -98,13 +107,7 @@ export async function sendMessageAction(
                 { role: "user", parts: retryMessageParts },
               ],
             },
-            config:
-              retryModelInfo.provider === "OpenRouter"
-                ? {
-                    apiKey: process.env.OPENROUTER_API_KEY,
-                    baseUrl: "https://openrouter.ai/api/v1",
-                  }
-                : undefined,
+            config: getConfig(retryModelInfo.provider),
           });
 
         const aiResponse = retryResponse.text();
