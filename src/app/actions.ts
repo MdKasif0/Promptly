@@ -20,6 +20,13 @@ interface ActionResult {
   error?: string;
 }
 
+const isRateLimitError = (errorMessage: string): boolean => {
+    const lowerCaseError = errorMessage.toLowerCase();
+    return lowerCaseError.includes("rate limit") || 
+           lowerCaseError.includes("quota") || 
+           lowerCaseError.includes("too many requests");
+}
+
 export async function sendMessageAction(
   payload: SendMessagePayload
 ): Promise<ActionResult> {
@@ -37,8 +44,9 @@ export async function sendMessageAction(
       if (msg.image) {
         parts.push({ media: { url: msg.image } });
       }
-      // @ts-ignore
-      return { role: msg.role, parts };
+      return msg.role === 'user' 
+        ? [{ role: 'user', parts }]
+        : [{ role: 'model', parts }];
     }
   );
 
@@ -81,6 +89,13 @@ export async function sendMessageAction(
   } catch (err: any) {
     console.error("API call failed:", err.message);
 
+    if (isRateLimitError(err.message)) {
+        return {
+            success: false,
+            error: `You've hit the rate limit for ${modelInfo.name}. Please try again later or select a different model.`
+        }
+    }
+
     try {
       const decision = await handleApiErrorWithLLM({
         errorMessage: err.message,
@@ -92,7 +107,7 @@ export async function sendMessageAction(
       if (decision.shouldRetry && decision.newModel) {
         const retryModelInfo = getModelById(decision.newModel as ModelId);
         if (!retryModelInfo) {
-          return { success: false, error: `Retry model not found: ${decision.newModel}` };
+          return { success: false, error: `AI tried to use a model that doesn't exist: ${decision.newModel}. Please try again.` };
         }
         
         const retryModelId = retryModelInfo.provider === "Gemini" ? `googleai/${retryModelInfo.id}` : retryModelInfo.id;
@@ -120,14 +135,14 @@ export async function sendMessageAction(
       } else {
         return {
           success: false,
-          error: `AI decided not to retry. Reason: ${decision.reason}`,
+          error: `The AI decided not to retry. Reason: ${decision.reason}`,
         };
       }
     } catch (e: any) {
       console.error(e);
       return {
         success: false,
-        error: `An error occurred while using the AI error handler: ${e.message}`,
+        error: `An unexpected error occurred. The AI error handler failed with: ${e.message}`,
       };
     }
   }

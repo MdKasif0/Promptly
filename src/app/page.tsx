@@ -104,13 +104,12 @@ export default function ChatPage() {
     if (imageUrl && !selectedModel?.capabilities.includes("Vision")) {
         toast({
             variant: "destructive",
-            title: "Error",
-            description: "The selected model does not support image inputs. Please select a vision model.",
+            title: "Model Does Not Support Images",
+            description: "The selected model does not support image inputs. Please select a vision-capable model.",
         });
         setImage(null);
         return;
     }
-
 
     const newUserMessage: Message = {
       id: nanoid(),
@@ -122,6 +121,7 @@ export default function ChatPage() {
     let currentChatId = activeChatId;
     let currentMessages = messages;
 
+    // Handle the state update for a new or existing chat
     if (!currentChatId) {
       const newChatId = nanoid();
       const newChatSession: ChatSession = {
@@ -134,13 +134,12 @@ export default function ChatPage() {
       setChatHistory((prev) => [newChatSession, ...prev]);
       setActiveChatId(newChatId);
       setMessages([newUserMessage]);
-      currentMessages = [newUserMessage];
-      currentChatId = newChatId;
+      currentMessages = [newUserMessage]; // The history for the action will be the new message
     } else {
-       addMessage(newUserMessage);
-       currentMessages = [...messages, newUserMessage];
+      addMessage(newUserMessage);
+      currentMessages = [...messages, newUserMessage]; // Add new message to existing
     }
-
+    
     setIsLoading(true);
 
     try {
@@ -148,7 +147,7 @@ export default function ChatPage() {
         message: messageContent,
         image: imageUrl,
         model: model,
-        history: currentMessages.slice(0, -1),
+        history: currentMessages.slice(0, -1), // History is all messages except the new one
       });
 
       if (success && aiResponse) {
@@ -161,38 +160,16 @@ export default function ChatPage() {
       } else {
         toast({
           variant: "destructive",
-          title: "Error",
-          description: error || "An unknown error occurred.",
-        });
-        // Remove user message on error to allow retry
-         setMessages(prev => prev.slice(0, -1));
-         setChatHistory((prevHistory) => {
-            const newHistory = prevHistory.map((chat) => {
-                if (chat.id === activeChatId) {
-                    return { ...chat, messages: chat.messages.slice(0, -1) };
-                }
-                return chat;
-            });
-            return newHistory;
+          title: "An error occurred",
+          description: error || "An unknown error occurred. Please try again.",
         });
       }
-    } catch (e) {
+    } catch (e: any) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to send message. Please try again.",
+        title: "Something went wrong",
+        description: e.message || "Failed to send message. Please check your connection and try again.",
       });
-      // Remove user message on error to allow retry
-      setMessages(prev => prev.slice(0, -1));
-      setChatHistory((prevHistory) => {
-        const newHistory = prevHistory.map((chat) => {
-            if (chat.id === activeChatId) {
-                return { ...chat, messages: chat.messages.slice(0, -1) };
-            }
-            return chat;
-        });
-        return newHistory;
-    });
     } finally {
       setIsLoading(false);
       setInput("");

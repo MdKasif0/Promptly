@@ -52,7 +52,14 @@ The available models are:
 - Name: {{name}} (ID: {{id}}) - Description: {{description}} - Provider: {{provider}}
 {{/each}}
 
-Determine if the request should be retried. If so, select a different model from the available models that might be more suitable for the prompt, or suggest an updated prompt if you believe the original prompt was the problem.
+Here's how to decide:
+1.  **Check for Rate Limits**: If the error message contains phrases like "rate limit", "too many requests", or "quota exceeded", set 'shouldRetry' to false and explain that the user has hit a rate limit.
+2.  **Analyze the Error**: If it's not a rate limit, analyze the error. Is it related to the model's capabilities (e.g., trying to use a non-vision model for an image)? Is the prompt unclear or malformed?
+3.  **Decide to Retry**:
+    - If the error seems temporary or fixable by switching models, set 'shouldRetry' to true.
+    - If you retry, select a *different* model from the available list that is suitable for the prompt.
+    - If you believe the prompt is the issue, you can suggest an 'updatedPrompt'.
+    - If no other model seems appropriate or the error is persistent, set 'shouldRetry' to false.
 
 IMPORTANT: If you decide to retry with a new model, you MUST return the 'id' of the model, not its 'name'.
 
