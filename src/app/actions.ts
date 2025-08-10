@@ -2,7 +2,7 @@
 "use server";
 
 import { generate } from "genkit";
-import handleApiErrorWithLLM, { type HandleApiErrorWithLLMInput } from "@/ai/flows/handle-api-error-with-llm";
+import handleApiErrorWithLLM from "@/ai/flows/handle-api-error-with-llm";
 import { ALL_MODELS, getModelById, type ModelId } from "@/lib/models";
 import type { Message } from "@/lib/types";
 import {Part} from "genkit/content";
@@ -53,25 +53,21 @@ export async function sendMessageAction(
     return { success: false, error: "Model not found." };
   }
   
-  const historyParts: Part[] = payload.history.flatMap(
-    (msg): Part[] => {
-      const parts: Part[] = [{ text: msg.content }];
-      if (msg.image) {
-        parts.push({ media: { url: msg.image } });
-      }
-      return [
-        { role: msg.role === 'user' ? 'user' : 'model', parts }
-      ];
+  const historyParts: Part[] = payload.history.flatMap((msg): Part[] => {
+    const parts: Part[] = [{ text: msg.content }];
+    if (msg.image) {
+      parts.push({ media: { url: msg.image } });
     }
-  );
+    return [{ role: msg.role === 'user' ? 'user' : 'model', parts }];
+  });
 
   const messageParts: Part[] = [{ text: payload.message }];
   if (payload.image) {
     messageParts.push({ media: { url: payload.image } });
   }
-  
-  const modelId = modelInfo.id;
 
+  const modelId = modelInfo.id;
+  
   const config = {
     apiKey: process.env.OPENROUTER_API_KEY,
     baseUrl: "https://openrouter.ai/api/v1",

@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -10,7 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { ALL_MODELS, type Model } from '@/lib/models';
+import { type Model } from '@/lib/models';
 
 const ModelSchema = z.object({
   id: z.string(),
@@ -49,7 +50,7 @@ The original prompt was: "{{originalPrompt}}"
 
 The available models are:
 {{#each availableModels}}
-- Name: {{name}} (ID: {{id}}) - Description: {{description}} - Provider: {{provider}}
+- Name: {{name}} (ID: {{id}}) - Description: {{description}}
 {{/each}}
 
 Here's how to decide:
