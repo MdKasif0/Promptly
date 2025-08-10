@@ -64,7 +64,7 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className={cn("group relative flex items-start gap-3", message.role === 'user' ? 'justify-end' : '')}
+            className={cn("group relative flex w-full items-start gap-3", message.role === 'user' ? 'justify-end' : '')}
           >
             {message.role === "assistant" && <ChatAvatar role="assistant" />}
             <div className={cn(
