@@ -16,7 +16,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { MODEL_DATA, type ModelId } from "@/lib/models";
-import { ChevronDown, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 interface ModelSelectorProps {
   model: ModelId;
@@ -31,7 +31,6 @@ export function ModelSelector({ model, setModel }: ModelSelectorProps) {
       <SelectTrigger className="w-auto h-auto bg-transparent border-none focus:ring-0 focus:ring-offset-0 gap-2 px-3 py-1.5 rounded-full hover:bg-muted/50">
         <Sparkles className="h-4 w-4 text-primary" />
         <SelectValue placeholder="Select a model" />
-        <ChevronDown className="h-4 w-4 opacity-50" />
       </SelectTrigger>
       <SelectContent className="max-h-[80vh]">
         <TooltipProvider delayDuration={100}>
