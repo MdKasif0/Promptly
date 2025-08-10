@@ -1,10 +1,11 @@
 
+
 "use client";
 
 import * as React from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Mic, SendHorizontal, Expand, Check } from "lucide-react";
+import { Mic, SendHorizontal, Expand, Shrink } from "lucide-react";
 import Image from 'next/image';
 import { getModelById, type ModelId } from "@/lib/models";
 import { cn } from "@/lib/utils";
@@ -105,8 +106,8 @@ export function ChatInput({
   }, [input, isFullScreen]);
 
   React.useEffect(() => {
-    if (!isLoading && !isFullScreen) {
-      inputRef.current?.focus();
+    if (inputRef.current) {
+        inputRef.current.focus();
     }
   }, [isLoading, isFullScreen]);
   
@@ -120,6 +121,11 @@ export function ChatInput({
   if (isFullScreen) {
     return (
       <div className="fixed inset-0 bg-background z-50 flex flex-col p-4">
+        <div className="flex justify-end">
+            <Button variant="ghost" size="icon" className="h-12 w-12" onClick={() => setIsFullScreen(false)}>
+              <Shrink />
+           </Button>
+        </div>
         <Textarea
           ref={inputRef}
           value={input}
@@ -129,12 +135,9 @@ export function ChatInput({
           autoFocus
         />
         <div className="flex justify-end gap-2 mt-4">
-           <Button variant="ghost" size="icon" className="rounded-full h-12 w-12" onClick={() => setIsFullScreen(false)}>
-              <Expand />
-           </Button>
-           <Button size="lg" className="rounded-full h-12 px-6" onClick={() => setIsFullScreen(false)}>
-              <Check className="mr-2 h-5 w-5"/>
-              Done
+           <Button size="lg" className="rounded-full h-12 px-6 bg-white text-black hover:bg-gray-200" onClick={handleSubmit}>
+              <SendHorizontal className="mr-2 h-5 w-5"/>
+              Send
            </Button>
         </div>
       </div>
@@ -195,7 +198,7 @@ export function ChatInput({
                  </Button>
             )}
             <div className="flex items-center gap-1 self-end">
-               <Button type="button" variant="ghost" size="icon" className="rounded-full h-10 w-10" disabled={isLoading}>
+               <Button type="button" variant="ghost" size="icon" className="rounded-full h-10 w-10" disabled={isLoading} onClick={handleMicClick}>
                  <Mic className="text-muted-foreground" />
                  <span className="sr-only">Use microphone</span>
                </Button>
