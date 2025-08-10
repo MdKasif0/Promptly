@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'AI Chat Spark',
+  title: 'Promptly',
   description: 'A Multi-Model AI Chat Web App with OpenRouter & Gemini API',
 };
 
