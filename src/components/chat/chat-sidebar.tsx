@@ -20,7 +20,7 @@ import {
   Library,
   Sparkles,
   ChevronDown,
-  ChevronsLeft
+  MessageSquarePlus
 } from "lucide-react";
 import type { ChatSession } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -63,12 +63,9 @@ export function ChatSidebar({
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-end">
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onNewChat}>
-            <Plus size={18} />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleSidebar}>
-            <ChevronsLeft size={18} />
+            <MessageSquarePlus size={18} />
           </Button>
         </div>
         <div className="relative mt-4">
