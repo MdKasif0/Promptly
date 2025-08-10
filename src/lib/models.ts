@@ -3,18 +3,32 @@ export const MODEL_DATA = {
     label: "Reasoning",
     models: [
       {
-        id: "gemini-pro",
-        name: "Gemini Pro",
-        description: "Google's powerful, general-purpose model.",
-        capabilities: ["Text", "Logic"],
-        provider: "Gemini",
+        id: "deepseek/deepseek-r1-0528:free",
+        name: "DeepSeek R1 (Reasoning+Code)",
+        description: "Great for deep reasoning & coding.",
+        capabilities: ["Text", "Logic", "Code"],
+        provider: "OpenRouter",
       },
       {
-        id: "claude-3-opus",
-        name: "Claude 3 Opus",
-        description: "Anthropic's most intelligent model for complex tasks.",
+        id: "moonshotai/kimi-k2:free",
+        name: "Kimi K2 (Reasoning)",
+        description: "Long-context reasoning.",
         capabilities: ["Text", "Logic", "Analysis"],
         provider: "OpenRouter",
+      },
+      {
+        id: "qwen/qwen3-235b-a22b:free",
+        name: "Qwen3 235B (Reasoning)",
+        description: "Strong reasoning LLM.",
+        capabilities: ["Text", "Logic"],
+        provider: "OpenRouter",
+      },
+      {
+        id: "gemini-2.5-pro",
+        name: "Gemini 2.5 Pro",
+        description: "Google's powerful model for reasoning and general tasks.",
+        capabilities: ["Text", "Logic", "General"],
+        provider: "Gemini",
       },
     ],
   },
@@ -22,18 +36,18 @@ export const MODEL_DATA = {
     label: "Coding",
     models: [
       {
-        id: "codellama-70b",
-        name: "CodeLlama 70B",
-        description: "State-of-the-art model for code generation.",
+        id: "qwen/qwen3-coder:free",
+        name: "Qwen3 Coder",
+        description: "Optimized for code generation.",
         capabilities: ["Code", "Text"],
         provider: "OpenRouter",
       },
       {
-        id: "gemini-1.5-pro",
-        name: "Gemini 1.5 Pro",
-        description: "Google's next-gen model with a large context window.",
-        capabilities: ["Code", "Text", "Vision"],
-        provider: "Gemini",
+        id: "cognitivecomputations/dolphin-mistral-24b-venice-edition:free",
+        name: "Dolphin Mistral 24B Venice",
+        description: "Balanced code + general.",
+        capabilities: ["Code", "Text", "General"],
+        provider: "OpenRouter",
       },
     ],
   },
@@ -41,29 +55,10 @@ export const MODEL_DATA = {
     label: "Vision",
     models: [
       {
-        id: "gemini-pro-vision",
-        name: "Gemini Pro Vision",
-        description: "Google's model for understanding images and text.",
+        id: "meta-llama/llama-3.2-11b-vision-instruct:free",
+        name: "LLaMA 3.2 11B Vision",
+        description: "Image understanding.",
         capabilities: ["Vision", "Text"],
-        provider: "Gemini",
-      },
-      {
-        id: "claude-3-haiku",
-        name: "Claude 3 Haiku",
-        description: "Fastest and most compact model for near-instant responsiveness.",
-        capabilities: ["Vision", "Text", "Speed"],
-        provider: "OpenRouter",
-      },
-    ],
-  },
-  uncensored: {
-    label: "Uncensored",
-    models: [
-      {
-        id: "mythomax-l2-13b",
-        name: "MythoMax L2 13B",
-        description: "A creative writing and roleplaying model.",
-        capabilities: ["Creative", "Unfiltered"],
         provider: "OpenRouter",
       },
     ],
@@ -72,10 +67,45 @@ export const MODEL_DATA = {
     label: "General",
     models: [
       {
-        id: "mistral-7b-instruct",
-        name: "Mistral 7B Instruct",
-        description: "A small, efficient model for general tasks.",
+        id: "gemini-2.5-flash",
+        name: "Gemini 2.5 Flash",
+        description: "Google's fast and lightweight model.",
         capabilities: ["General", "Fast"],
+        provider: "Gemini",
+      },
+      {
+        id: "deepseek/deepseek-chat-v3-0324:free",
+        name: "DeepSeek Chat v3",
+        description: "General purpose.",
+        capabilities: ["General"],
+        provider: "OpenRouter",
+      },
+      {
+        id: "google/gemma-3-27b-it:free",
+        name: "Gemma 3 27B IT",
+        description: "Instruction-tuned.",
+        capabilities: ["General", "Instruction"],
+        provider: "OpenRouter",
+      },
+      {
+        id: "openai/gpt-oss-20b:free",
+        name: "GPT-OSS 20B",
+        description: "General purpose.",
+        capabilities: ["General"],
+        provider: "OpenRouter",
+      },
+      {
+        id: "z-ai/glm-4.5-air:free",
+        name: "GLM 4.5 Air",
+        description: "Fast, general.",
+        capabilities: ["General", "Fast"],
+        provider: "OpenRouter",
+      },
+      {
+        id: "meta-llama/llama-3.3-70b-instruct:free",
+        name: "LLaMA 3.3 70B",
+        description: "General large model.",
+        capabilities: ["General", "Large"],
         provider: "OpenRouter",
       },
     ],
@@ -83,7 +113,7 @@ export const MODEL_DATA = {
 };
 
 export type ModelCategory = keyof typeof MODEL_DATA;
-export type Model = typeof MODEL_DATA[ModelCategory]["models"][0];
+export type Model = (typeof MODEL_DATA)[ModelCategory]["models"][0];
 export type ModelId = Model["id"];
 
 export const ALL_MODELS: Model[] = Object.values(MODEL_DATA).flatMap(

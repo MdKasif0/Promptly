@@ -1,8 +1,10 @@
 "use server";
 
+import { generate } from "genkit";
 import { handleApiErrorWithLLM } from "@/ai/flows/handle-api-error-with-llm";
-import { ALL_MODELS } from "@/lib/models";
+import { ALL_MODELS, getModelById, type ModelId } from "@/lib/models";
 import type { Message } from "@/lib/types";
+import {Part} from "genkit/content";
 
 interface SendMessagePayload {
   message: string;
@@ -17,54 +19,109 @@ interface ActionResult {
   error?: string;
 }
 
-export async function sendMessageAction(payload: SendMessagePayload): Promise<ActionResult> {
-  // Simulate API latency
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+export async function sendMessageAction(
+  payload: SendMessagePayload
+): Promise<ActionResult> {
+  const modelInfo = getModelById(payload.model as ModelId);
 
-  // 1 in 4 chance of failure to test the error handling
-  const shouldFail = Math.random() < 0.25;
+  if (!modelInfo) {
+    return { success: false, error: "Model not found." };
+  }
 
-  if (shouldFail) {
-    const errorMessage = `Simulated API Error: Model '${payload.model}' is currently unavailable or experiencing high traffic.`;
+  const modelId = modelInfo.provider === "Gemini" ? `googleai/${modelInfo.id}` : modelInfo.id;
+  
+  const historyParts: Part[] = payload.history.flatMap(
+    (msg): Part[] => {
+      const parts: Part[] = [{ text: msg.content }];
+      if (msg.image) {
+        parts.push({ media: { url: msg.image } });
+      }
+      return [{ role: msg.role, parts }];
+    }
+  );
+
+  const messageParts: Part[] = [{ text: payload.message }];
+  if (payload.image) {
+    messageParts.push({ media: { url: payload.image } });
+  }
+
+  try {
+    const response = await generate({
+      model: modelId,
+      prompt: {
+        messages: [
+          ...historyParts,
+          { role: "user", parts: messageParts },
+        ],
+      },
+      config:
+        modelInfo.provider === "OpenRouter"
+          ? {
+              apiKey: process.env.OPENROUTER_API_KEY,
+              baseUrl: "https://openrouter.ai/api/v1",
+            }
+          : undefined,
+    });
+
+    const aiResponse = response.text();
+    return { success: true, message: aiResponse };
+
+  } catch (err: any) {
+    console.error("API call failed:", err.message);
+
     try {
       const decision = await handleApiErrorWithLLM({
-        errorMessage: errorMessage,
+        errorMessage: err.message,
         originalPrompt: payload.message,
         availableModels: ALL_MODELS.map((m) => m.id),
         currentModel: payload.model,
       });
 
-      if (decision.shouldRetry) {
-        const retryModel = decision.newModel || payload.model;
-        const retryPrompt = decision.updatedPrompt || payload.message;
-        
-        // Simulate a successful retry call
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        
-        let response = `(Retried with  модель ${retryModel}) AI response to: "${retryPrompt}"`;
-        if (payload.image) {
-          response += " with an image.";
+      if (decision.shouldRetry && decision.newModel) {
+        const retryModelInfo = getModelById(decision.newModel as ModelId);
+        if (!retryModelInfo) {
+          return { success: false, error: "Retry model not found." };
         }
-        return { success: true, message: response, };
+        
+        const retryModelId = retryModelInfo.provider === "Gemini" ? `googleai/${retryModelInfo.id}` : retryModelInfo.id;
+        const retryPrompt = decision.updatedPrompt || payload.message;
+        const retryMessageParts: Part[] = [{ text: retryPrompt }];
+        if (payload.image) {
+            retryMessageParts.push({ media: { url: payload.image } });
+        }
+
+        const retryResponse = await generate({
+            model: retryModelId,
+            prompt: {
+              messages: [
+                ...historyParts,
+                { role: "user", parts: retryMessageParts },
+              ],
+            },
+            config:
+              retryModelInfo.provider === "OpenRouter"
+                ? {
+                    apiKey: process.env.OPENROUTER_API_KEY,
+                    baseUrl: "https://openrouter.ai/api/v1",
+                  }
+                : undefined,
+          });
+
+        const aiResponse = retryResponse.text();
+        return { success: true, message: `(Retried with ${retryModelInfo.name}) ${aiResponse}` };
+
       } else {
         return {
           success: false,
           error: `AI decided not to retry. Reason: ${decision.reason}`,
         };
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
       return {
         success: false,
-        error: "An error occurred while using the AI error handler.",
+        error: `An error occurred while using the AI error handler: ${e.message}`,
       };
     }
   }
-
-  // Successful response
-  let response = `AI response to: "${payload.message}"`;
-  if (payload.image) {
-    response += " with the provided image.";
-  }
-  return { success: true, message: response };
 }

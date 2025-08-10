@@ -13,7 +13,7 @@ export default function ChatPage() {
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [activeChatId, setActiveChatId] = React.useState<string | null>(null);
   const [chatHistory, setChatHistory] = React.useState<ChatSession[]>([]);
-  const [model, setModel] = React.useState<ModelId>("gemini-pro");
+  const [model, setModel] = React.useState<ModelId>("gemini-2.5-pro");
   const [isLoading, setIsLoading] = React.useState(false);
   const [input, setInput] = React.useState("");
   const [image, setImage] = React.useState<string | null>(null);
@@ -47,7 +47,7 @@ export default function ChatPage() {
         localStorage.setItem("activeChatId", JSON.stringify(activeChatId));
         const activeChat = chatHistory.find((chat) => chat.id === activeChatId);
         setMessages(activeChat?.messages || []);
-        setModel(activeChat?.modelId || "gemini-pro");
+        setModel(activeChat?.modelId || "gemini-2.5-pro");
       } else {
         setMessages([]);
         localStorage.removeItem("activeChatId");
@@ -59,11 +59,15 @@ export default function ChatPage() {
 
   const addMessage = (message: Message) => {
     setMessages((prev) => [...prev, message]);
-    setChatHistory((prevHistory) =>
-      prevHistory.map((chat) =>
-        chat.id === activeChatId ? { ...chat, messages: [...chat.messages, message] } : chat
-      )
-    );
+    setChatHistory((prevHistory) => {
+      const newHistory = prevHistory.map((chat) => {
+        if (chat.id === activeChatId) {
+          return { ...chat, messages: [...chat.messages, message] };
+        }
+        return chat;
+      });
+      return newHistory;
+    });
   };
 
   const handleSendMessage = async (messageContent: string, imageUrl: string | null) => {
@@ -77,6 +81,7 @@ export default function ChatPage() {
     };
 
     let currentChatId = activeChatId;
+    let currentMessages = messages;
 
     if (!currentChatId) {
       const newChatId = nanoid();
@@ -90,9 +95,11 @@ export default function ChatPage() {
       setChatHistory((prev) => [newChatSession, ...prev]);
       setActiveChatId(newChatId);
       setMessages([newUserMessage]);
+      currentMessages = [newUserMessage];
       currentChatId = newChatId;
     } else {
        addMessage(newUserMessage);
+       currentMessages = [...messages, newUserMessage];
     }
 
     setIsLoading(true);
@@ -102,7 +109,7 @@ export default function ChatPage() {
         message: messageContent,
         image: imageUrl,
         model: model,
-        history: messages,
+        history: currentMessages.slice(0, -1),
       });
 
       if (success && aiResponse) {
@@ -120,6 +127,15 @@ export default function ChatPage() {
         });
         // Remove user message on error to allow retry
          setMessages(prev => prev.slice(0, -1));
+         setChatHistory((prevHistory) => {
+            const newHistory = prevHistory.map((chat) => {
+                if (chat.id === activeChatId) {
+                    return { ...chat, messages: chat.messages.slice(0, -1) };
+                }
+                return chat;
+            });
+            return newHistory;
+        });
       }
     } catch (e) {
       toast({
@@ -129,6 +145,15 @@ export default function ChatPage() {
       });
       // Remove user message on error to allow retry
       setMessages(prev => prev.slice(0, -1));
+      setChatHistory((prevHistory) => {
+        const newHistory = prevHistory.map((chat) => {
+            if (chat.id === activeChatId) {
+                return { ...chat, messages: chat.messages.slice(0, -1) };
+            }
+            return chat;
+        });
+        return newHistory;
+    });
     } finally {
       setIsLoading(false);
       setInput("");
@@ -139,7 +164,7 @@ export default function ChatPage() {
   const startNewChat = () => {
     setActiveChatId(null);
     setMessages([]);
-    setModel("gemini-pro");
+    setModel("gemini-2.5-pro");
   };
 
   const switchChat = (chatId: string) => {
