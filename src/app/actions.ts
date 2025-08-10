@@ -20,6 +20,13 @@ interface ActionResult {
   error?: string;
 }
 
+const getErrorMessage = (err: any): string => {
+  if (typeof err === 'string') return err;
+  if (err.message) return err.message;
+  if (err.details) return JSON.stringify(err.details);
+  return JSON.stringify(err);
+};
+
 const isRateLimitError = (errorMessage: string): boolean => {
     const lowerCaseError = errorMessage.toLowerCase();
     return lowerCaseError.includes("rate limit") || 
@@ -44,6 +51,7 @@ export async function sendMessageAction(
       if (msg.image) {
         parts.push({ media: { url: msg.image } });
       }
+      // Correctly return user and model roles
       return msg.role === 'user' 
         ? [{ role: 'user', parts }]
         : [{ role: 'model', parts }];
@@ -73,9 +81,9 @@ export async function sendMessageAction(
   try {
     const response = await generate({
       model: modelId,
+      // @ts-ignore
       prompt: {
         messages: [
-          // @ts-ignore
           ...historyParts,
           { role: "user", parts: messageParts },
         ],
@@ -87,9 +95,10 @@ export async function sendMessageAction(
     return { success: true, message: aiResponse };
 
   } catch (err: any) {
-    console.error("API call failed:", err.message);
+    const errorMessage = getErrorMessage(err);
+    console.error("API call failed:", errorMessage);
 
-    if (isRateLimitError(err.message)) {
+    if (isRateLimitError(errorMessage)) {
         return {
             success: false,
             error: `You've hit the rate limit for ${modelInfo.name}. Please try again later or select a different model.`
@@ -98,7 +107,7 @@ export async function sendMessageAction(
 
     try {
       const decision = await handleApiErrorWithLLM({
-        errorMessage: err.message,
+        errorMessage: errorMessage,
         originalPrompt: payload.message,
         availableModels: ALL_MODELS,
         currentModel: payload.model,
@@ -119,9 +128,9 @@ export async function sendMessageAction(
 
         const retryResponse = await generate({
             model: retryModelId,
+            // @ts-ignore
             prompt: {
               messages: [
-                // @ts-ignore
                 ...historyParts,
                 { role: "user", parts: retryMessageParts },
               ],
@@ -139,10 +148,11 @@ export async function sendMessageAction(
         };
       }
     } catch (e: any) {
-      console.error(e);
+      const finalErrorMessage = getErrorMessage(e);
+      console.error("AI error handler failed:", finalErrorMessage);
       return {
         success: false,
-        error: `An unexpected error occurred. The AI error handler failed with: ${e.message}`,
+        error: `An unexpected error occurred. The AI error handler failed with: ${finalErrorMessage}`,
       };
     }
   }
