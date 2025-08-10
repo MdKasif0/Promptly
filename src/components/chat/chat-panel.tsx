@@ -22,7 +22,7 @@ interface ChatPanelProps {
 
 export function ChatPanel(props: ChatPanelProps) {
   return (
-    <div className="flex flex-col h-screen relative">
+    <div className="flex flex-1 flex-col h-screen relative">
       <ChatHeader model={props.model} setModel={props.setModel} onNewChat={props.onNewChat} messages={props.messages}/>
       <div className="flex-1 overflow-y-auto">
         {props.messages.length > 0 ? (
