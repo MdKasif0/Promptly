@@ -10,18 +10,27 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { ALL_MODELS, type Model } from '@/lib/models';
+
+const ModelSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  capabilities: z.array(z.string()),
+  provider: z.string(),
+});
 
 const HandleApiErrorWithLLMInputSchema = z.object({
   errorMessage: z.string().describe('The error message received from the API.'),
   originalPrompt: z.string().describe('The original prompt that caused the error.'),
-  availableModels: z.array(z.string()).describe('The list of available models to retry with.'),
-  currentModel: z.string().optional().describe('The name of the current model being used, if any'),
+  availableModels: z.array(ModelSchema).describe('The list of available models to retry with.'),
+  currentModel: z.string().optional().describe('The ID of the current model being used, if any'),
 });
 export type HandleApiErrorWithLLMInput = z.infer<typeof HandleApiErrorWithLLMInputSchema>;
 
 const HandleApiErrorWithLLMOutputSchema = z.object({
   shouldRetry: z.boolean().describe('Whether the request should be retried.'),
-  newModel: z.string().optional().describe('The model to use for the retry, if any.'),
+  newModel: z.string().optional().describe('The model ID to use for the retry, if any.'),
   updatedPrompt: z.string().optional().describe('The updated prompt to use for the retry, if any.'),
   reason: z.string().describe('Reason for the retry decision.'),
 });
@@ -38,9 +47,14 @@ You received the following error message: "{{errorMessage}}"
 
 The original prompt was: "{{originalPrompt}}"
 
-The available models are: {{availableModels}}
+The available models are:
+{{#each availableModels}}
+- Name: {{name}} (ID: {{id}}) - Description: {{description}} - Provider: {{provider}}
+{{/each}}
 
 Determine if the request should be retried. If so, select a different model from the available models that might be more suitable for the prompt, or suggest an updated prompt if you believe the original prompt was the problem.
+
+IMPORTANT: If you decide to retry with a new model, you MUST return the 'id' of the model, not its 'name'.
 
 If a model is already specified, consider a different one or updating the prompt. If no model is specified, choose the most appropriate one.
 
@@ -79,5 +93,5 @@ const handleApiErrorWithLLMFlow = ai.defineFlow(
   }
 );
 
+export default handleApiErrorWithLLMFlow;
 export const handleApiErrorWithLLM = handleApiErrorWithLLMFlow;
-export default handleApiErrorWithLLM;

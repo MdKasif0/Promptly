@@ -73,14 +73,14 @@ export async function sendMessageAction(
       const decision = await handleApiErrorWithLLM({
         errorMessage: err.message,
         originalPrompt: payload.message,
-        availableModels: ALL_MODELS.map((m) => m.id),
+        availableModels: ALL_MODELS,
         currentModel: payload.model,
       });
 
       if (decision.shouldRetry && decision.newModel) {
         const retryModelInfo = getModelById(decision.newModel as ModelId);
         if (!retryModelInfo) {
-          return { success: false, error: "Retry model not found." };
+          return { success: false, error: `Retry model not found: ${decision.newModel}` };
         }
         
         const retryModelId = retryModelInfo.provider === "Gemini" ? `googleai/${retryModelInfo.id}` : retryModelInfo.id;
