@@ -3,6 +3,7 @@
 import {
   Sheet,
   SheetContent,
+  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -69,6 +70,7 @@ export function MoreOptionsMenu({
         side="bottom"
         className="bg-[#1C1C1E] text-white border-none rounded-t-3xl w-full max-w-3xl mx-auto h-[90vh] flex flex-col p-0"
       >
+        <SheetTitle className="sr-only">More Options</SheetTitle>
         <div className="flex-1 overflow-y-auto px-6 pb-6 pt-8">
             <div className="grid grid-cols-3 gap-4 mb-6">
             {fileOptions.map((item, index) => (
