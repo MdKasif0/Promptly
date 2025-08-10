@@ -22,6 +22,15 @@ interface ActionResult {
 
 const getErrorMessage = (err: any): string => {
   if (typeof err === 'string') return err;
+  if (err instanceof Error) {
+    if (err.cause) {
+        try {
+            const cause = JSON.parse(String(err.cause));
+            if (cause.error?.message) return cause.error.message;
+        } catch {}
+    }
+    return err.message;
+  }
   if (err.message) return err.message;
   if (err.details) return JSON.stringify(err.details);
   if (err.error?.message) return err.error.message;
@@ -47,18 +56,21 @@ const isRateLimitError = (errorMessage: string): boolean => {
 export async function sendMessageAction(
   payload: SendMessagePayload
 ): Promise<ActionResult> {
+  if (!payload.model) {
+    return { success: false, error: "Model not selected. Please select a model to start." };
+  }
+  
   const modelInfo = getModelById(payload.model as ModelId);
-
   if (!modelInfo) {
     return { success: false, error: "Model not found." };
   }
   
   const historyParts: Part[] = payload.history.flatMap((msg): Part[] => {
-    const parts: Part[] = [{ text: msg.content }];
+    const contentParts: Part[] = [{ text: msg.content }];
     if (msg.image) {
-      parts.push({ media: { url: msg.image } });
+      contentParts.push({ media: { url: msg.image } });
     }
-    return [{ role: msg.role === 'user' ? 'user' : 'model', parts }];
+    return [{ role: msg.role === 'user' ? 'user' : 'model', parts: contentParts }];
   });
 
   const messageParts: Part[] = [{ text: payload.message }];
@@ -66,7 +78,7 @@ export async function sendMessageAction(
     messageParts.push({ media: { url: payload.image } });
   }
 
-  const modelId = modelInfo.id;
+  const modelId = payload.model;
   
   const config = {
     apiKey: process.env.OPENROUTER_API_KEY,
@@ -76,7 +88,6 @@ export async function sendMessageAction(
   try {
     const response = await generate({
       model: modelId,
-      // @ts-ignore
       prompt: {
         messages: [
           ...historyParts,
@@ -123,7 +134,6 @@ export async function sendMessageAction(
 
         const retryResponse = await generate({
             model: retryModelId,
-            // @ts-ignore
             prompt: {
               messages: [
                 ...historyParts,
