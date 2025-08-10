@@ -4,7 +4,7 @@
 import * as React from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Mic, Image as ImageIcon, SendHorizontal } from "lucide-react";
+import { Mic, SendHorizontal } from "lucide-react";
 import Image from 'next/image';
 import { getModelById, type ModelId } from "@/lib/models";
 import { cn } from "@/lib/utils";
@@ -30,6 +30,19 @@ const SoundWaveIcon = () => (
         <path d="M18 10V14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
     </svg>
 )
+
+const GalleryIcon = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M7.5 4.5H15.5C16.6046 4.5 17.5 5.39543 17.5 6.5V14.5C17.5 15.6046 16.6046 16.5 15.5 16.5H7.5C6.39543 16.5 5.5 15.6046 5.5 14.5V6.5C5.5 5.39543 6.39543 4.5 7.5 4.5Z" 
+              stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M10 9.5C10.5523 9.5 11 9.05228 11 8.5C11 7.94772 10.5523 7.5 10 7.5C9.44772 7.5 9 7.94772 9 8.5C9 9.05228 9.44772 9.5 10 9.5Z" 
+              fill="currentColor"/>
+        <path d="M17.5 11.5L14.5 14.5L12 11.5L8 15.5H15.5C16.6046 15.5 17.5 14.6046 17.5 13.5V11.5Z" 
+              stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M4.5 6.5V18.5C4.5 19.6046 5.39543 20.5 6.5 20.5H18.5" 
+              stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+);
 
 
 export function ChatInput({
@@ -108,7 +121,7 @@ export function ChatInput({
                 onClick={() => setIsOptionsOpen(true)}
                 disabled={isLoading}
               >
-                <ImageIcon />
+                <GalleryIcon />
                 <span className="sr-only">More options</span>
               </Button>
           </MoreOptionsMenu>
