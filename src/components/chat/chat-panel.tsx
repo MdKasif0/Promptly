@@ -31,7 +31,7 @@ export function ChatPanel(props: ChatPanelProps) {
           <ChatEmptyScreen setInput={props.setInput} model={props.model} setModel={props.setModel} />
         )}
       </div>
-      <div className="fixed bottom-0 left-0 right-0 md:left-[16rem] bg-background/80 backdrop-blur-sm">
+      <div className="fixed bottom-0 left-0 right-0 md:left-[16rem] bg-background/80 backdrop-blur-sm flex justify-center">
         <ChatInput
             input={props.input}
             setInput={props.setInput}
