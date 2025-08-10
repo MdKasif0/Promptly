@@ -41,7 +41,7 @@ export function ChatLayout({
           onNewChat={onNewChat}
           onDeleteChat={onDeleteChat}
         />
-        <ChatPanel {...chatPanelProps} />
+        <ChatPanel {...chatPanelProps} onNewChat={onNewChat} />
       </div>
     </SidebarProvider>
   );
