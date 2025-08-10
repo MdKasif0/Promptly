@@ -39,7 +39,9 @@ export default function ChatPage() {
 
   React.useEffect(() => {
     try {
-      localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
+      if (chatHistory.length > 0) {
+        localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
+      }
     } catch (e) {
       console.error("Failed to save to localStorage", e);
     }
@@ -77,15 +79,16 @@ export default function ChatPage() {
 
   const addMessage = (message: Message) => {
     setMessages((prev) => [...prev, message]);
-    setChatHistory((prevHistory) => {
-      const newHistory = prevHistory.map((chat) => {
-        if (chat.id === activeChatId) {
-          return { ...chat, messages: [...chat.messages, message] };
-        }
-        return chat;
-      });
-      return newHistory;
-    });
+    if (activeChatId) {
+        setChatHistory((prevHistory) => {
+            return prevHistory.map((chat) => {
+                if (chat.id === activeChatId) {
+                    return { ...chat, messages: [...chat.messages, message] };
+                }
+                return chat;
+            });
+        });
+    }
   };
 
   const handleSendMessage = async (messageContent: string, imageUrl: string | null) => {

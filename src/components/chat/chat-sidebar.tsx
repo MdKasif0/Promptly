@@ -7,7 +7,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { PlusSquare, MessageSquare } from "lucide-react";
@@ -33,11 +32,10 @@ export function ChatSidebar({
       <SidebarHeader>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">History</h2>
-          <SidebarTrigger />
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onNewChat}>
+            <PlusSquare size={16} />
+          </Button>
         </div>
-        <Button variant="ghost" className="w-full justify-start gap-2" onClick={onNewChat}>
-          <PlusSquare size={16} /> New Chat
-        </Button>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
@@ -46,15 +44,16 @@ export function ChatSidebar({
               <SidebarMenuItem key={chat.id}>
                 <SidebarMenuButton
                   onClick={() => onSwitchChat(chat.id)}
-                  className={cn("truncate", activeChatId === chat.id && "bg-sidebar-accent text-sidebar-accent-foreground")}
+                  isActive={activeChatId === chat.id}
+                  className="h-auto py-2"
                   tooltip={{
                     children: chat.title,
                     side: "right"
                   }}
                 >
                   <MessageSquare size={16} />
-                  <div className="flex flex-col items-start truncate">
-                    <span className="truncate">{chat.title}</span>
+                  <div className="flex flex-col items-start truncate text-left">
+                    <span className="truncate font-medium">{chat.title}</span>
                     <span className="text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(chat.createdAt), { addSuffix: true })}
                     </span>
