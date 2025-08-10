@@ -27,9 +27,6 @@ const HandleApiErrorWithLLMOutputSchema = z.object({
 });
 export type HandleApiErrorWithLLMOutput = z.infer<typeof HandleApiErrorWithLLMOutputSchema>;
 
-export async function handleApiErrorWithLLM(input: HandleApiErrorWithLLMInput): Promise<HandleApiErrorWithLLMOutput> {
-  return handleApiErrorWithLLMFlow(input);
-}
 
 const prompt = ai.definePrompt({
   name: 'handleApiErrorWithLLMPrompt',
@@ -81,3 +78,6 @@ const handleApiErrorWithLLMFlow = ai.defineFlow(
     return output!;
   }
 );
+
+export const handleApiErrorWithLLM = handleApiErrorWithLLMFlow;
+export default handleApiErrorWithLLM;

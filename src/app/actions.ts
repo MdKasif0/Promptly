@@ -1,7 +1,7 @@
 "use server";
 
 import { generate } from "genkit";
-import { handleApiErrorWithLLM } from "@/ai/flows/handle-api-error-with-llm";
+import handleApiErrorWithLLM from "@/ai/flows/handle-api-error-with-llm";
 import { ALL_MODELS, getModelById, type ModelId } from "@/lib/models";
 import type { Message } from "@/lib/types";
 import {Part} from "genkit/content";
