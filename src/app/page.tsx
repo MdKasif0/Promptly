@@ -41,6 +41,8 @@ export default function ChatPage() {
     try {
       if (chatHistory.length > 0) {
         localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
+      } else if (localStorage.getItem("chatHistory")) {
+        localStorage.removeItem("chatHistory");
       }
     } catch (e) {
       console.error("Failed to save to localStorage", e);
@@ -202,10 +204,25 @@ export default function ChatPage() {
     setActiveChatId(null);
     setMessages([]);
     setModel("gemini-2.5-flash");
+    localStorage.removeItem("activeChatId");
   };
 
   const switchChat = (chatId: string) => {
     setActiveChatId(chatId);
+  };
+  
+  const deleteChat = (chatId: string) => {
+    setChatHistory(prev => {
+        const newHistory = prev.filter(chat => chat.id !== chatId);
+        if (activeChatId === chatId) {
+            const newActiveId = newHistory.length > 0 ? newHistory[0].id : null;
+            setActiveChatId(newActiveId);
+            if (!newActiveId) {
+              startNewChat();
+            }
+        }
+        return newHistory;
+    });
   };
 
   return (
@@ -215,6 +232,7 @@ export default function ChatPage() {
         activeChatId={activeChatId}
         onSwitchChat={switchChat}
         onNewChat={startNewChat}
+        onDeleteChat={deleteChat}
         model={model}
         setModel={handleSetModel}
         messages={messages}

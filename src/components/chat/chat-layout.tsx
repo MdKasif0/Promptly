@@ -11,6 +11,7 @@ interface ChatLayoutProps {
   activeChatId: string | null;
   onSwitchChat: (chatId: string) => void;
   onNewChat: () => void;
+  onDeleteChat: (chatId: string) => void;
   model: ModelId;
   setModel: (modelId: ModelId) => void;
   messages: Message[];
@@ -27,6 +28,7 @@ export function ChatLayout({
   activeChatId,
   onSwitchChat,
   onNewChat,
+  onDeleteChat,
   ...chatPanelProps
 }: ChatLayoutProps) {
   return (
@@ -37,6 +39,7 @@ export function ChatLayout({
           activeChatId={activeChatId}
           onSwitchChat={onSwitchChat}
           onNewChat={onNewChat}
+          onDeleteChat={onDeleteChat}
         />
         <ChatPanel {...chatPanelProps} />
       </div>

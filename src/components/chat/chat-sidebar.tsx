@@ -30,6 +30,7 @@ interface ChatSidebarProps {
   activeChatId: string | null;
   onSwitchChat: (chatId: string) => void;
   onNewChat: () => void;
+  onDeleteChat: (chatId: string) => void;
 }
 
 export function ChatSidebar({
@@ -37,13 +38,14 @@ export function ChatSidebar({
   activeChatId,
   onSwitchChat,
   onNewChat,
+  onDeleteChat
 }: ChatSidebarProps) {
 
   const handleDeleteChat = (e: React.MouseEvent, chatId: string) => {
     e.stopPropagation();
-    // Placeholder for delete logic
-    console.log("Delete chat:", chatId);
+    onDeleteChat(chatId);
   }
+
   return (
     <Sidebar>
       <SidebarHeader>
