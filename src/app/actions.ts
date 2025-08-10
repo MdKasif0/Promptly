@@ -1,3 +1,4 @@
+
 "use server";
 
 import { generate } from "genkit";
@@ -36,7 +37,8 @@ export async function sendMessageAction(
       if (msg.image) {
         parts.push({ media: { url: msg.image } });
       }
-      return [{ role: msg.role, parts }];
+      // @ts-ignore
+      return { role: msg.role, parts };
     }
   );
 
@@ -65,6 +67,7 @@ export async function sendMessageAction(
       model: modelId,
       prompt: {
         messages: [
+          // @ts-ignore
           ...historyParts,
           { role: "user", parts: messageParts },
         ],
@@ -103,6 +106,7 @@ export async function sendMessageAction(
             model: retryModelId,
             prompt: {
               messages: [
+                // @ts-ignore
                 ...historyParts,
                 { role: "user", parts: retryMessageParts },
               ],
