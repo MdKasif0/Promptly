@@ -62,11 +62,6 @@ export function ChatSidebar({
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="flex items-center justify-end">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onNewChat}>
-            <MessageSquarePlus size={18} />
-          </Button>
-        </div>
         <div className="relative mt-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search" className="pl-9 h-10 rounded-full bg-muted border-none focus-visible:ring-primary" />
