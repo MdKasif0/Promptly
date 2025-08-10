@@ -10,6 +10,7 @@ import { Copy, ThumbsUp, ThumbsDown, Volume2, RotateCw, Share2 } from "lucide-re
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useToast } from "@/hooks/use-toast";
+import { AiIcon } from "./ai-icon";
 
 interface ChatMessagesProps {
   messages: Message[];
@@ -55,7 +56,7 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
   return (
     <div ref={scrollableContainerRef} className="h-full space-y-8 overflow-y-auto px-4 pt-20 pb-28">
       <AnimatePresence>
-        {messages.map((message) => (
+        {messages.map((message, index) => (
           <motion.div
             key={message.id}
             layout
@@ -64,10 +65,17 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
             exit={{ opacity: 0, y: -20 }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
             className={cn(
-              "group relative flex w-full",
+              "group relative flex w-full gap-3",
               message.role === 'user' ? 'justify-end' : 'justify-start'
             )}
           >
+             {message.role === 'assistant' && (
+                <div className="h-8 w-8 shrink-0">
+                    {index === messages.length - 1 || messages[index+1].role === 'user' ? (
+                        <AiIcon />
+                    ) : null}
+                </div>
+            )}
             <div className={cn(
               "flex flex-col gap-2 max-w-[80%]", 
               message.role === "user" ? "items-end" : "items-start"
@@ -127,8 +135,13 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
             animate={{ opacity: 1, y: 0 }}
             className="flex justify-start"
           >
-            <div className="rounded-xl bg-card px-4 py-3">
-              <LoadingIndicator />
+            <div className="flex items-center gap-3">
+                 <div className="h-8 w-8 shrink-0">
+                    <AiIcon />
+                 </div>
+                <div className="rounded-xl bg-card px-4 py-3">
+                    <LoadingIndicator />
+                </div>
             </div>
           </motion.div>
         )}
