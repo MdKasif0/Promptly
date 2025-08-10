@@ -27,7 +27,7 @@ export const MODEL_DATA = {
         id: "gemini-2.5-pro",
         name: "Gemini 2.5 Pro",
         description: "Google's powerful model for reasoning and general tasks.",
-        capabilities: ["Text", "Logic", "General"],
+        capabilities: ["Text", "Logic", "General", "Vision"],
         provider: "Gemini",
       },
     ],
@@ -70,7 +70,7 @@ export const MODEL_DATA = {
         id: "gemini-2.5-flash",
         name: "Gemini 2.5 Flash",
         description: "Google's fast and lightweight model.",
-        capabilities: ["General", "Fast"],
+        capabilities: ["General", "Fast", "Vision"],
         provider: "Gemini",
       },
       {
