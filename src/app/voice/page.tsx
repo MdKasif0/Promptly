@@ -6,7 +6,7 @@ import { Settings, X, Mic } from 'lucide-react';
 import Link from 'next/link';
 
 const NUM_PARTICLES = 5000;
-const PARTICLE_SIZE = 0.5;
+const PARTICLE_SIZE = 0.3;
 const ROTATION_SPEED = 0.0005;
 
 interface Particle {
@@ -118,7 +118,7 @@ export default function VoiceTakingPage() {
         const alpha = 0.5 + 0.5 * (rz2 / globeRadius.current);
 
         if (x2d >= 0 && x2d <= width && y2d >= 0 && y2d <= height) {
-            const isCyan = p.theta > Math.PI;
+            const isCyan = Math.random() < 0.1;
             context.fillStyle = isCyan ? `rgba(0, 255, 255, ${alpha})` : `rgba(200, 200, 200, ${alpha})`;
             context.beginPath();
             context.arc(x2d, y2d, PARTICLE_SIZE * scale, 0, 2 * Math.PI);
@@ -138,7 +138,7 @@ export default function VoiceTakingPage() {
       const newHeight = window.innerHeight;
       canvas.width = newWidth;
       canvas.height = newHeight;
-      globeRadius.current = Math.min(250, newWidth * 0.35, newHeight * 0.35);
+      globeRadius.current = Math.min(200, newWidth * 0.3, newHeight * 0.3);
       createParticles();
     };
     resizeCanvas();
