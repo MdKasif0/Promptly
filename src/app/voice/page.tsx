@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { voiceConversationAction } from '@/app/actions';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 const NUM_PARTICLES = 5000;
 const PARTICLE_SIZE = 0.3;
@@ -45,6 +46,7 @@ export default function VoiceTakingPage() {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   const startRecording = useCallback(async () => {
     if (isMuted || !streamRef.current || mediaRecorderRef.current?.state === 'recording') return;
@@ -174,6 +176,14 @@ export default function VoiceTakingPage() {
     }
   }, [isSpeaking, isMuted, startRecording]);
   
+  const handleClose = () => {
+    streamRef.current?.getTracks().forEach(track => track.stop());
+    if (mediaRecorderRef.current?.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+    router.push('/');
+  };
+
   const toggleMute = () => {
     setIsMuted(prev => {
         const newMutedState = !prev;
@@ -336,11 +346,11 @@ export default function VoiceTakingPage() {
       <audio ref={audioRef} className="hidden" />
 
       <div className="absolute bottom-10 flex w-full justify-center items-center px-10">
-        <Link href="/">
-           <button className="absolute left-10 flex items-center justify-center h-16 w-16 bg-gray-800/70 rounded-full text-white hover:bg-gray-700/90 transition-colors">
-            <X size={28} />
-          </button>
-        </Link>
+        <button 
+          onClick={handleClose}
+          className="absolute left-10 flex items-center justify-center h-16 w-16 bg-gray-800/70 rounded-full text-white hover:bg-gray-700/90 transition-colors">
+          <X size={28} />
+        </button>
         <button 
           onClick={toggleMute}
           disabled={isSpeaking || isPending}
@@ -356,5 +366,3 @@ export default function VoiceTakingPage() {
     </div>
   );
 }
-
-    
