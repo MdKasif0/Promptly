@@ -110,16 +110,17 @@ export async function voiceConversationAction(
       apiKey: process.env.ELEVENLABS_API_KEY,
     });
     
-    // Convert File to Blob for the API
-    const audioBlob = new Blob([audioFile], { type: audioFile.type });
-
-    const stream = await elevenlabs.agents.speak({
-      agentId: process.env.ELEVENLABS_AGENT_ID!,
-      audio: audioBlob,
-      stream: true,
-    });
+    const audioBlob = new Blob([audioFile], { type: 'audio/webm' });
+    const chunks: Buffer[] = [];
     
-    const chunks = [];
+    const stream = await elevenlabs.agents.conversation(
+      process.env.ELEVENLABS_AGENT_ID!,
+      audioBlob,
+      {
+          stream: true,
+      }
+    );
+
     for await (const chunk of stream) {
       if (chunk.audio) {
           chunks.push(chunk.audio);
