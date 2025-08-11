@@ -4,7 +4,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://promptly.com'),
+  metadataBase: new URL('https://promptly-ai-chatbot.netlify.app/'),
   title: {
     default: 'Promptly: Your Advanced AI Chat Copilot',
     template: `%s | Promptly`,
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Promptly: Your Advanced AI Chat Copilot',
     description: 'An AI chat app for instant intelligent conversations',
-    url: 'https://promptly.com',
+    url: 'https://promptly-ai-chatbot.netlify.app/',
     siteName: 'Promptly',
     images: [
       {
