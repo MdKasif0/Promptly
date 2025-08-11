@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useCallback, useState, useTransition } from 'react';
 import { useActionState } from 'react';
 import { Settings, X, Mic, MicOff } from 'lucide-react';
 import Link from 'next/link';
@@ -44,9 +44,10 @@ export default function VoiceTakingPage() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const startRecording = useCallback(async () => {
-    if (isMuted || !streamRef.current) return;
+    if (isMuted || !streamRef.current || mediaRecorderRef.current?.state === 'recording') return;
     
     try {
       mediaRecorderRef.current = new MediaRecorder(streamRef.current);
@@ -67,25 +68,29 @@ export default function VoiceTakingPage() {
             const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
             const formData = new FormData();
             formData.append('audio', audioBlob, 'recording.webm');
-            formAction(formData);
+            startTransition(() => {
+                formAction(formData);
+            });
         }
       };
 
       mediaRecorderRef.current.start();
       
-      // Voice activity detection
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      analyserRef.current = audioContextRef.current.createAnalyser();
-      const source = audioContextRef.current.createMediaStreamSource(streamRef.current);
-      source.connect(analyserRef.current);
-      analyserRef.current.fftSize = 512;
-      const bufferLength = analyserRef.current.frequencyBinCount;
+      if (!audioContextRef.current) {
+          audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+          analyserRef.current = audioContextRef.current.createAnalyser();
+          const source = audioContextRef.current.createMediaStreamSource(streamRef.current);
+          source.connect(analyserRef.current);
+          analyserRef.current.fftSize = 512;
+      }
+      
+      const bufferLength = analyserRef.current!.frequencyBinCount;
       const dataArray = new Uint8Array(bufferLength);
 
       let silenceStart = Date.now();
       
       const detectSilence = () => {
-        if (!isListening) return;
+        if (mediaRecorderRef.current?.state !== 'recording') return;
 
         analyserRef.current?.getByteFrequencyData(dataArray);
         const sum = dataArray.reduce((a, b) => a + b, 0);
@@ -113,7 +118,7 @@ export default function VoiceTakingPage() {
           description: "Could not start recording. Please check microphone permissions.",
       });
     }
-  }, [isMuted, formAction, toast, isListening]);
+  }, [isMuted, formAction, toast, startTransition]);
   
   useEffect(() => {
     const getMicPermission = async () => {
@@ -132,6 +137,9 @@ export default function VoiceTakingPage() {
     getMicPermission();
     return () => {
         streamRef.current?.getTracks().forEach(track => track.stop());
+        if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+            audioContextRef.current.close();
+        }
     }
   }, [toast]);
   
@@ -335,7 +343,7 @@ export default function VoiceTakingPage() {
         </Link>
         <button 
           onClick={toggleMute}
-          disabled={isSpeaking}
+          disabled={isSpeaking || isPending}
           className={cn(
             "flex items-center justify-center h-24 w-24 bg-gray-800/70 rounded-full text-white hover:bg-gray-700/90 transition-all duration-300 transform active:scale-110 disabled:opacity-50",
             isListening && !isMuted && "bg-green-500/80 scale-110",
