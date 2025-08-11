@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useEffect, useRef, useCallback, useState, useActionState } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
+import { useActionState } from 'react';
 import { Settings, X, Mic } from 'lucide-react';
 import Link from 'next/link';
 import { voiceConversationAction } from '@/app/actions';
@@ -36,6 +37,73 @@ export default function VoiceTakingPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const hasSentGreeting = useRef(false);
+
+  const getInitialGreeting = useCallback(() => {
+    // Create a silent audio blob
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const buffer = audioContext.createBuffer(1, 1, 22050);
+    const audioData = buffer.getChannelData(0);
+    audioData[0] = 0;
+
+    const wavEncoder = new (window as any).WavAudioEncoder(22050, 1);
+    wavEncoder.encode([audioData]);
+    const silentBlob = wavEncoder.finish("audio/wav");
+
+    const formData = new FormData();
+    formData.append('audio', silentBlob, 'silent.wav');
+    formAction(formData);
+  }, [formAction]);
+
+  useEffect(() => {
+    // A little hack to make WavAudioEncoder available on window
+    if (typeof (window as any).WavAudioEncoder === 'undefined') {
+        (window as any).WavAudioEncoder = class WavAudioEncoder {
+          constructor(sampleRate, numChannels) {
+            this.sampleRate = sampleRate;
+            this.numChannels = numChannels;
+            this.numSamples = 0;
+            this.dataViews = [];
+          }
+          encode(buffer) {
+            const F32_to_I16 = (f32) => {
+                let s = Math.max(-1, Math.min(1, f32));
+                return s < 0 ? s * 0x8000 : s * 0x7FFF;
+            };
+            const interleaved = new Int16Array(buffer[0].length);
+            for (let i = 0; i < buffer[0].length; i++) {
+                interleaved[i] = F32_to_I16(buffer[0][i]);
+            }
+            this.dataViews.push(interleaved);
+            this.numSamples += interleaved.length;
+          }
+          finish(mimeType) {
+            const dataSize = this.numChannels * this.numSamples * 2;
+            const view = new DataView(new ArrayBuffer(44));
+            view.setUint32(0, 1380533830, false); // "RIFF"
+            view.setUint32(4, 36 + dataSize, true); // file length - 8
+            view.setUint32(8, 1463899717, false); // "WAVE"
+            view.setUint32(12, 1718449184, false); // "fmt "
+            view.setUint32(16, 16, true); // PCM chunk size
+            view.setUint32(20, 1, true); // format code
+            view.setUint16(22, this.numChannels, true); // channels
+            view.setUint32(24, this.sampleRate, true); // sample rate
+            view.setUint32(28, this.sampleRate * this.numChannels * 2, true); // byte rate
+            view.setUint16(32, this.numChannels * 2, true); // block align
+            view.setUint16(34, 16, true); // bits per sample
+            view.setUint32(36, 1684108385, false); // "data"
+            view.setUint32(40, dataSize, true); // data size
+            const blob = new Blob([view, ...this.dataViews], { type: mimeType });
+            return blob;
+          }
+        }
+    }
+
+    if (!hasSentGreeting.current) {
+      getInitialGreeting();
+      hasSentGreeting.current = true;
+    }
+  }, [getInitialGreeting]);
 
   const startRecording = async () => {
     try {
@@ -67,10 +135,12 @@ export default function VoiceTakingPage() {
   };
 
   const onMicMouseDown = () => {
+    if (isSpeaking) return;
     startRecording();
   };
 
   const onMicMouseUp = () => {
+    if (isSpeaking) return;
     stopRecording();
   };
   
@@ -262,3 +332,5 @@ export default function VoiceTakingPage() {
     </div>
   );
 }
+
+    
