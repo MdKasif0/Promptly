@@ -2,6 +2,7 @@
 "use server";
 
 import type { Message } from "@/lib/types";
+import { ElevenLabsClient } from "elevenlabs";
 
 interface SendMessagePayload {
   message: string;
@@ -91,5 +92,39 @@ export async function sendMessageAction(
       success: false,
       error: `An unexpected error occurred: ${errorMessage}`,
     };
+  }
+}
+
+export async function voiceConversationAction(
+  prevState: any,
+  formData: FormData
+) {
+  const audio = formData.get("audio");
+
+  if (!audio || !(audio instanceof Blob)) {
+    return { error: "No audio data received." };
+  }
+
+  try {
+    const elevenlabs = new ElevenLabsClient({
+      apiKey: process.env.ELEVENLABS_API_KEY,
+    });
+
+    const stream = await elevenlabs.agents.speak({
+      agentId: process.env.ELEVENLABS_AGENT_ID!,
+      audio: audio as Blob,
+    });
+
+    const chunks = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
+    const blob = new Blob(chunks, { type: "audio/mpeg" });
+    const dataUrl = `data:audio/mpeg;base64,${Buffer.from(await blob.arrayBuffer()).toString('base64')}`;
+    
+    return { audio: dataUrl };
+  } catch (error) {
+    console.error("ElevenLabs API Error:", error);
+    return { error: "An error occurred during the voice conversation." };
   }
 }

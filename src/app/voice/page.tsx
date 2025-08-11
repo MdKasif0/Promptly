@@ -1,9 +1,12 @@
-// src/app/voice/page.tsx
+
 "use client";
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { Settings, X, Mic } from 'lucide-react';
 import Link from 'next/link';
+import { useFormState } from 'react-dom';
+import { voiceConversationAction } from '@/app/actions';
+import { cn } from '@/lib/utils';
 
 const NUM_PARTICLES = 5000;
 const PARTICLE_SIZE = 0.3;
@@ -27,6 +30,66 @@ export default function VoiceTakingPage() {
   const mouse = useRef({ x: 0, y: 0, isDown: false, ox: 0, oy: 0, px: 0, py: 0 });
   const globeRadius = useRef(200);
   const repulsion = useRef({ x: 0, y: 0, strength: 0 });
+  
+  const [state, formAction] = useFormState(voiceConversationAction, { audio: null, error: null });
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data);
+      };
+      mediaRecorderRef.current.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.webm');
+        formAction(formData);
+        setIsListening(false);
+      };
+      mediaRecorderRef.current.start();
+      setIsListening(true);
+    } catch (error) {
+      console.error("Error accessing microphone:", error);
+      alert("Could not access microphone. Please ensure permissions are granted.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+  };
+
+  const onMicMouseDown = () => {
+    startRecording();
+  };
+
+  const onMicMouseUp = () => {
+    stopRecording();
+  };
+  
+  useEffect(() => {
+    if (state.audio && audioRef.current) {
+      audioRef.current.src = state.audio;
+      audioRef.current.play();
+      setIsSpeaking(true);
+      audioRef.current.onended = () => {
+        setIsSpeaking(false);
+      };
+    }
+    if(state.error) {
+        alert(`Error: ${state.error}`);
+        setIsListening(false);
+        setIsSpeaking(false);
+    }
+  }, [state]);
 
   const onMouseDown = (e: MouseEvent | TouchEvent) => {
     mouse.current.isDown = true;
@@ -118,8 +181,13 @@ export default function VoiceTakingPage() {
         const alpha = 0.5 + 0.5 * (rz2 / globeRadius.current);
 
         if (x2d >= 0 && x2d <= width && y2d >= 0 && y2d <= height) {
-            const isCyan = Math.random() < 0.1;
-            context.fillStyle = isCyan ? `rgba(0, 255, 255, ${alpha})` : `rgba(200, 200, 200, ${alpha})`;
+            let color = `rgba(200, 200, 200, ${alpha})`;
+            if (isListening) {
+                 color = `rgba(0, 255, 0, ${alpha})`;
+            } else if (isSpeaking) {
+                 color = `rgba(0, 255, 255, ${alpha})`;
+            }
+            context.fillStyle = color;
             context.beginPath();
             context.arc(x2d, y2d, PARTICLE_SIZE * scale, 0, 2 * Math.PI);
             context.fill();
@@ -127,7 +195,7 @@ export default function VoiceTakingPage() {
     });
 
     requestAnimationFrame(render);
-  }, []);
+  }, [isListening, isSpeaking]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -171,15 +239,25 @@ export default function VoiceTakingPage() {
       </Link>
       
       <canvas ref={canvasRef} className="absolute inset-0" />
+      <audio ref={audioRef} className="hidden" />
 
-      <div className="absolute bottom-10 flex w-full justify-between items-center px-10">
+      <div className="absolute bottom-10 flex w-full justify-center items-center px-10">
         <Link href="/">
-           <button className="flex items-center justify-center h-16 w-16 bg-gray-800/70 rounded-full text-white hover:bg-gray-700/90 transition-colors">
+           <button className="absolute left-10 flex items-center justify-center h-16 w-16 bg-gray-800/70 rounded-full text-white hover:bg-gray-700/90 transition-colors">
             <X size={28} />
           </button>
         </Link>
-        <button className="flex items-center justify-center h-16 w-16 bg-gray-800/70 rounded-full text-white hover:bg-gray-700/90 transition-colors">
-          <Mic size={28} />
+        <button 
+          onMouseDown={onMicMouseDown}
+          onMouseUp={onMicMouseUp}
+          onTouchStart={onMicMouseDown}
+          onTouchEnd={onMicMouseUp}
+          className={cn(
+            "flex items-center justify-center h-24 w-24 bg-gray-800/70 rounded-full text-white hover:bg-gray-700/90 transition-all duration-300 transform active:scale-110",
+            isListening && "bg-green-500/80 scale-110",
+            isSpeaking && "bg-cyan-500/80 scale-110"
+            )}>
+          <Mic size={40} />
         </button>
       </div>
     </div>
