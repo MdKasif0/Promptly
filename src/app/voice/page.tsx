@@ -3,10 +3,11 @@
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useActionState } from 'react';
-import { Settings, X, Mic } from 'lucide-react';
+import { Settings, X, Mic, MicOff } from 'lucide-react';
 import Link from 'next/link';
 import { voiceConversationAction } from '@/app/actions';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 const NUM_PARTICLES = 5000;
 const PARTICLE_SIZE = 0.3;
@@ -24,6 +25,7 @@ interface Particle {
 }
 
 export default function VoiceTakingPage() {
+  const { toast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particles = useRef<Particle[]>([]);
   const rotation = useRef(0);
@@ -32,133 +34,148 @@ export default function VoiceTakingPage() {
   const repulsion = useRef({ x: 0, y: 0, strength: 0 });
   
   const [state, formAction] = useActionState(voiceConversationAction, { audio: null, error: null });
-  const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const hasSentGreeting = useRef(false);
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
-  const getInitialGreeting = useCallback(() => {
-    // Create a silent audio blob
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const buffer = audioContext.createBuffer(1, 1, 22050);
-    const audioData = buffer.getChannelData(0);
-    audioData[0] = 0;
-
-    const wavEncoder = new (window as any).WavAudioEncoder(22050, 1);
-    wavEncoder.encode([audioData]);
-    const silentBlob = wavEncoder.finish("audio/wav");
-
-    const formData = new FormData();
-    formData.append('audio', silentBlob, 'silent.wav');
-    formAction(formData);
-  }, [formAction]);
-
-  useEffect(() => {
-    // A little hack to make WavAudioEncoder available on window
-    if (typeof (window as any).WavAudioEncoder === 'undefined') {
-        (window as any).WavAudioEncoder = class WavAudioEncoder {
-          constructor(sampleRate, numChannels) {
-            this.sampleRate = sampleRate;
-            this.numChannels = numChannels;
-            this.numSamples = 0;
-            this.dataViews = [];
-          }
-          encode(buffer) {
-            const F32_to_I16 = (f32) => {
-                let s = Math.max(-1, Math.min(1, f32));
-                return s < 0 ? s * 0x8000 : s * 0x7FFF;
-            };
-            const interleaved = new Int16Array(buffer[0].length);
-            for (let i = 0; i < buffer[0].length; i++) {
-                interleaved[i] = F32_to_I16(buffer[0][i]);
-            }
-            this.dataViews.push(interleaved);
-            this.numSamples += interleaved.length;
-          }
-          finish(mimeType) {
-            const dataSize = this.numChannels * this.numSamples * 2;
-            const view = new DataView(new ArrayBuffer(44));
-            view.setUint32(0, 1380533830, false); // "RIFF"
-            view.setUint32(4, 36 + dataSize, true); // file length - 8
-            view.setUint32(8, 1463899717, false); // "WAVE"
-            view.setUint32(12, 1718449184, false); // "fmt "
-            view.setUint32(16, 16, true); // PCM chunk size
-            view.setUint32(20, 1, true); // format code
-            view.setUint16(22, this.numChannels, true); // channels
-            view.setUint32(24, this.sampleRate, true); // sample rate
-            view.setUint32(28, this.sampleRate * this.numChannels * 2, true); // byte rate
-            view.setUint16(32, this.numChannels * 2, true); // block align
-            view.setUint16(34, 16, true); // bits per sample
-            view.setUint32(36, 1684108385, false); // "data"
-            view.setUint32(40, dataSize, true); // data size
-            const blob = new Blob([view, ...this.dataViews], { type: mimeType });
-            return blob;
-          }
-        }
-    }
-
-    if (!hasSentGreeting.current) {
-      getInitialGreeting();
-      hasSentGreeting.current = true;
-    }
-  }, [getInitialGreeting]);
-
-  const startRecording = async () => {
+  const startRecording = useCallback(async () => {
+    if (isMuted || !streamRef.current) return;
+    
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
+      mediaRecorderRef.current = new MediaRecorder(streamRef.current);
       audioChunksRef.current = [];
+      
       mediaRecorderRef.current.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
+        if(event.data.size > 0) audioChunksRef.current.push(event.data);
       };
+      
+      mediaRecorderRef.current.onstart = () => {
+        setIsListening(true);
+        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      };
+
       mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const formData = new FormData();
-        formData.append('audio', audioBlob, 'recording.webm');
-        formAction(formData);
         setIsListening(false);
+        if (audioChunksRef.current.length > 0) {
+            const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.webm');
+            formAction(formData);
+        }
       };
+
       mediaRecorderRef.current.start();
-      setIsListening(true);
+      
+      // Voice activity detection
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      analyserRef.current = audioContextRef.current.createAnalyser();
+      const source = audioContextRef.current.createMediaStreamSource(streamRef.current);
+      source.connect(analyserRef.current);
+      analyserRef.current.fftSize = 512;
+      const bufferLength = analyserRef.current.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      let silenceStart = Date.now();
+      
+      const detectSilence = () => {
+        if (!isListening) return;
+
+        analyserRef.current?.getByteFrequencyData(dataArray);
+        const sum = dataArray.reduce((a, b) => a + b, 0);
+        const avg = sum / bufferLength;
+
+        if (avg < 5) { // Threshold for silence
+          if (Date.now() - silenceStart > 1000) { // 1 second of silence
+            if (mediaRecorderRef.current?.state === 'recording') {
+              mediaRecorderRef.current.stop();
+            }
+          }
+        } else {
+          silenceStart = Date.now();
+        }
+        requestAnimationFrame(detectSilence);
+      };
+
+      detectSilence();
+
     } catch (error) {
-      console.error("Error accessing microphone:", error);
-      alert("Could not access microphone. Please ensure permissions are granted.");
+      console.error("Error starting recording:", error);
+      toast({
+          variant: "destructive",
+          title: "Recording Error",
+          description: "Could not start recording. Please check microphone permissions.",
+      });
     }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
+  }, [isMuted, formAction, toast, isListening]);
+  
+  useEffect(() => {
+    const getMicPermission = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            streamRef.current = stream;
+        } catch (error) {
+            console.error("Error accessing microphone:", error);
+            toast({
+                variant: "destructive",
+                title: "Microphone Access Denied",
+                description: "Please enable microphone permissions in your browser settings to use voice chat.",
+            });
+        }
+    };
+    getMicPermission();
+    return () => {
+        streamRef.current?.getTracks().forEach(track => track.stop());
     }
-  };
-
-  const onMicMouseDown = () => {
-    if (isSpeaking) return;
-    startRecording();
-  };
-
-  const onMicMouseUp = () => {
-    if (isSpeaking) return;
-    stopRecording();
-  };
+  }, [toast]);
   
   useEffect(() => {
     if (state.audio && audioRef.current) {
-      audioRef.current.src = state.audio;
-      audioRef.current.play();
       setIsSpeaking(true);
+      audioRef.current.src = state.audio;
+      audioRef.current.play().catch(e => console.error("Audio play failed:", e));
       audioRef.current.onended = () => {
         setIsSpeaking(false);
       };
     }
-    if(state.error) {
-        alert(`Error: ${state.error}`);
+    if (state.error) {
+        toast({
+            variant: "destructive",
+            title: "Voice Error",
+            description: state.error
+        })
         setIsListening(false);
         setIsSpeaking(false);
     }
-  }, [state]);
+  }, [state, toast]);
+
+  useEffect(() => {
+    // When not speaking, and not muted, start listening
+    if (!isSpeaking && !isMuted && mediaRecorderRef.current?.state !== 'recording') {
+      startRecording();
+    }
+    // When we are speaking, stop listening
+    if (isSpeaking && mediaRecorderRef.current?.state === 'recording') {
+        mediaRecorderRef.current.stop();
+    }
+  }, [isSpeaking, isMuted, startRecording]);
+  
+  const toggleMute = () => {
+    setIsMuted(prev => {
+        const newMutedState = !prev;
+        if (newMutedState && mediaRecorderRef.current?.state === 'recording') {
+            mediaRecorderRef.current.stop();
+            setIsListening(false);
+        }
+        return newMutedState;
+    });
+  }
 
   const onMouseDown = (e: MouseEvent | TouchEvent) => {
     mouse.current.isDown = true;
@@ -251,7 +268,7 @@ export default function VoiceTakingPage() {
 
         if (x2d >= 0 && x2d <= width && y2d >= 0 && y2d <= height) {
             let color = `rgba(200, 200, 200, ${alpha})`;
-            if (isListening) {
+            if (isListening && !isMuted) {
                  color = `rgba(0, 255, 0, ${alpha})`;
             } else if (isSpeaking) {
                  color = `rgba(0, 255, 255, ${alpha})`;
@@ -264,7 +281,7 @@ export default function VoiceTakingPage() {
     });
 
     requestAnimationFrame(render);
-  }, [isListening, isSpeaking]);
+  }, [isListening, isSpeaking, isMuted]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -317,16 +334,15 @@ export default function VoiceTakingPage() {
           </button>
         </Link>
         <button 
-          onMouseDown={onMicMouseDown}
-          onMouseUp={onMicMouseUp}
-          onTouchStart={onMicMouseDown}
-          onTouchEnd={onMicMouseUp}
+          onClick={toggleMute}
+          disabled={isSpeaking}
           className={cn(
-            "flex items-center justify-center h-24 w-24 bg-gray-800/70 rounded-full text-white hover:bg-gray-700/90 transition-all duration-300 transform active:scale-110",
-            isListening && "bg-green-500/80 scale-110",
-            isSpeaking && "bg-cyan-500/80 scale-110"
+            "flex items-center justify-center h-24 w-24 bg-gray-800/70 rounded-full text-white hover:bg-gray-700/90 transition-all duration-300 transform active:scale-110 disabled:opacity-50",
+            isListening && !isMuted && "bg-green-500/80 scale-110",
+            isSpeaking && "bg-cyan-500/80 scale-110",
+            isMuted && "bg-red-500/80"
             )}>
-          <Mic size={40} />
+          {isMuted ? <MicOff size={40}/> : <Mic size={40} />}
         </button>
       </div>
     </div>
