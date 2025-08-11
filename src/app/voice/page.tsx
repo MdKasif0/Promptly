@@ -4,11 +4,10 @@
 import { useEffect, useRef, useCallback, useState, useTransition } from 'react';
 import { useActionState } from 'react';
 import { Settings, X, Mic, MicOff } from 'lucide-react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { voiceConversationAction } from '@/app/actions';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 
 const NUM_PARTICLES = 5000;
 const PARTICLE_SIZE = 0.3;
@@ -160,7 +159,8 @@ export default function VoiceTakingPage() {
             audioContextRef.current.close();
         }
     }
-  }, [toast, formAction, startTransition]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toast, startTransition]);
   
   useEffect(() => {
     if (state.audio && audioRef.current) {
@@ -355,9 +355,6 @@ export default function VoiceTakingPage() {
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-[#1C1C1E] text-white overflow-hidden">
-      <Link href="#" className="absolute top-6 right-6 text-gray-400 hover:text-white">
-        <Settings size={28} />
-      </Link>
       
       <canvas ref={canvasRef} className="absolute inset-0" />
       <audio ref={audioRef} className="hidden" />
