@@ -6,6 +6,7 @@ const pwaConfig = withPWA({
   dest: 'public',
   register: true,
   skipWaiting: true,
+  reloadOnOnline: true,
   disable: process.env.NODE_ENV === 'development',
 });
 
