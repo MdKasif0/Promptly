@@ -116,7 +116,6 @@ export async function voiceConversationAction(
       stream: true,
       model: "deepseek/deepseek-chat-v3-0324:free",
       openRouterApiKey: process.env.OPENROUTER_API_KEY,
-      elevenLabsApiKey: process.env.ELEVENLABS_API_KEY,
     });
     
     const chunks = [];
@@ -132,6 +131,7 @@ export async function voiceConversationAction(
     return { audio: dataUrl };
   } catch (error) {
     console.error("ElevenLabs API Error:", error);
-    return { error: "An error occurred during the voice conversation." };
+    const errorMessage = getErrorMessage(error);
+    return { error: `An error occurred during the voice conversation: ${errorMessage}` };
   }
 }
