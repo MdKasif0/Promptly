@@ -47,6 +47,7 @@ export default function VoiceTakingPage() {
   const streamRef = useRef<MediaStream | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const greetingSentRef = useRef(false);
 
   const startRecording = useCallback(async () => {
     if (isMuted || !streamRef.current || mediaRecorderRef.current?.state === 'recording') return;
@@ -123,10 +124,25 @@ export default function VoiceTakingPage() {
   }, [isMuted, formAction, toast, startTransition]);
   
   useEffect(() => {
-    const getMicPermission = async () => {
+    const getMicAndSendGreeting = async () => {
+        if (greetingSentRef.current) return;
+        greetingSentRef.current = true;
+        
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             streamRef.current = stream;
+
+            // Send a silent audio blob to trigger the agent's greeting
+            const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+            const buffer = audioContext.createBuffer(1, 2, audioContext.sampleRate);
+            const silentBlob = new Blob([new DataView(new ArrayBuffer(0))], { type: 'audio/webm' });
+            
+            const formData = new FormData();
+            formData.append('audio', silentBlob, 'greeting.webm');
+            startTransition(() => {
+                formAction(formData);
+            });
+            
         } catch (error) {
             console.error("Error accessing microphone:", error);
             toast({
@@ -136,14 +152,15 @@ export default function VoiceTakingPage() {
             });
         }
     };
-    getMicPermission();
+    getMicAndSendGreeting();
+    
     return () => {
         streamRef.current?.getTracks().forEach(track => track.stop());
         if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
             audioContextRef.current.close();
         }
     }
-  }, [toast]);
+  }, [toast, formAction, startTransition]);
   
   useEffect(() => {
     if (state.audio && audioRef.current) {
@@ -353,7 +370,7 @@ export default function VoiceTakingPage() {
         </button>
         <button 
           onClick={toggleMute}
-          disabled={isSpeaking || isPending}
+          disabled={isPending && !isSpeaking} // Disable mute toggle during initial greeting load
           className={cn(
             "flex items-center justify-center h-24 w-24 bg-gray-800/70 rounded-full text-white hover:bg-gray-700/90 transition-all duration-300 transform active:scale-110 disabled:opacity-50",
             isListening && !isMuted && "bg-green-500/80 scale-110",
