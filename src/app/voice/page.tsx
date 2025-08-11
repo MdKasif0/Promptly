@@ -52,7 +52,7 @@ export default function VoiceTakingPage() {
     if (isMuted || !streamRef.current || mediaRecorderRef.current?.state === 'recording') return;
     
     try {
-      mediaRecorderRef.current = new MediaRecorder(streamRef.current);
+      mediaRecorderRef.current = new MediaRecorder(streamRef.current, { mimeType: 'audio/webm' });
       audioChunksRef.current = [];
       
       mediaRecorderRef.current.ondataavailable = (event) => {

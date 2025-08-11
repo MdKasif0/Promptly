@@ -99,9 +99,9 @@ export async function voiceConversationAction(
   prevState: any,
   formData: FormData
 ) {
-  const audio = formData.get("audio");
+  const audioFile = formData.get("audio");
 
-  if (!audio || !(audio instanceof Blob)) {
+  if (!audioFile || !(audioFile instanceof File)) {
     return { error: "No audio data received." };
   }
 
@@ -109,13 +109,14 @@ export async function voiceConversationAction(
     const elevenlabs = new ElevenLabsClient({
       apiKey: process.env.ELEVENLABS_API_KEY,
     });
+    
+    // Convert File to Blob for the API
+    const audioBlob = new Blob([audioFile], { type: audioFile.type });
 
     const stream = await elevenlabs.agents.speak({
       agentId: process.env.ELEVENLABS_AGENT_ID!,
-      audio: audio as Blob,
+      audio: audioBlob,
       stream: true,
-      model: "deepseek/deepseek-chat-v3-0324:free",
-      openRouterApiKey: process.env.OPENROUTER_API_KEY,
     });
     
     const chunks = [];
@@ -123,6 +124,10 @@ export async function voiceConversationAction(
       if (chunk.audio) {
           chunks.push(chunk.audio);
       }
+    }
+
+    if (chunks.length === 0) {
+        return { error: "The AI agent did not return any audio. Please try again." };
     }
 
     const blob = new Blob(chunks, { type: "audio/mpeg" });
