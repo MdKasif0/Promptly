@@ -4,7 +4,7 @@ Welcome to **Promptly**, a modern, high-performance AI chat application designed
 
 This project is bootstrapped with [Firebase Studio](https://firebase.google.com/studio).
 
-![Promptly Screenshot](https://placehold.co/1200x630.png?text=Promptly+App)
+![Promptly Screenshot](public/promptly-cover.png?text=Promptly+App)
 
 ## ✨ Features
 
