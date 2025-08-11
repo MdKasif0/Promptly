@@ -19,10 +19,10 @@ export const metadata: Metadata = {
     siteName: 'Promptly',
     images: [
       {
-        url: 'https://placehold.co/1200x630.png',
+        url: '/promptly-cover.png',
         width: 1200,
         height: 630,
-        alt: 'Promptly AI Chat Copilot',
+        alt: 'Promptly AI Chat Copilot Cover Image',
       },
     ],
     locale: 'en_US',
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Promptly: Your Advanced AI Chat Copilot',
     description: 'An AI chat app for instant intelligent conversations',
-    images: ['https://placehold.co/1200x630.png'],
+    images: ['/promptly-cover.png'],
     creator: '@promptly',
   },
   robots: {
