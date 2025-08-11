@@ -113,12 +113,19 @@ export async function voiceConversationAction(
     const stream = await elevenlabs.agents.speak({
       agentId: process.env.ELEVENLABS_AGENT_ID!,
       audio: audio as Blob,
+      stream: true,
+      model: "deepseek/deepseek-chat-v3-0324:free",
+      openRouterApiKey: process.env.OPENROUTER_API_KEY,
+      elevenLabsApiKey: process.env.ELEVENLABS_API_KEY,
     });
-
+    
     const chunks = [];
     for await (const chunk of stream) {
-      chunks.push(chunk);
+      if (chunk.audio) {
+          chunks.push(chunk.audio);
+      }
     }
+
     const blob = new Blob(chunks, { type: "audio/mpeg" });
     const dataUrl = `data:audio/mpeg;base64,${Buffer.from(await blob.arrayBuffer()).toString('base64')}`;
     
