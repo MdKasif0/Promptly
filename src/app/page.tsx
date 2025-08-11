@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -7,6 +8,9 @@ import type { Message, ChatSession } from "@/lib/types";
 import { sendMessageAction } from "./actions";
 import { useToast } from "@/hooks/use-toast";
 import { getModelById, type ModelId, ALL_MODELS } from "@/lib/models";
+import { Button } from "@/components/ui/button";
+import { ToastAction } from "@/components/ui/toast";
+
 
 const DEFAULT_MODEL: ModelId = "deepseek/deepseek-r1-0528:free";
 
@@ -19,6 +23,49 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [input, setInput] = React.useState("");
   const [image, setImage] = React.useState<string | null>(null);
+  const [installPromptEvent, setInstallPromptEvent] = React.useState<Event | null>(null);
+
+  React.useEffect(() => {
+    const handleBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setInstallPromptEvent(event);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (installPromptEvent) {
+      toast({
+        title: "Install Promptly",
+        description: "Get the full app experience. Install Promptly on your device.",
+        duration: 20000,
+        action: (
+          <ToastAction
+            altText="Install"
+            onClick={() => {
+              (installPromptEvent as any).prompt();
+              (installPromptEvent as any).userChoice.then((choiceResult: { outcome: string }) => {
+                if (choiceResult.outcome === 'accepted') {
+                  console.log('User accepted the A2HS prompt');
+                } else {
+                  console.log('User dismissed the A2HS prompt');
+                }
+                setInstallPromptEvent(null);
+              });
+            }}
+          >
+            Install
+          </ToastAction>
+        ),
+      });
+    }
+  }, [installPromptEvent, toast]);
+
 
   React.useEffect(() => {
     try {
