@@ -1,10 +1,9 @@
 
 "use client";
 
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useCallback, useState, useActionState } from 'react';
 import { Settings, X, Mic } from 'lucide-react';
 import Link from 'next/link';
-import { useFormState } from 'react-dom';
 import { voiceConversationAction } from '@/app/actions';
 import { cn } from '@/lib/utils';
 
@@ -31,7 +30,7 @@ export default function VoiceTakingPage() {
   const globeRadius = useRef(200);
   const repulsion = useRef({ x: 0, y: 0, strength: 0 });
   
-  const [state, formAction] = useFormState(voiceConversationAction, { audio: null, error: null });
+  const [state, formAction] = useActionState(voiceConversationAction, { audio: null, error: null });
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
