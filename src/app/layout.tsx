@@ -9,12 +9,12 @@ export const metadata: Metadata = {
     default: 'Promptly: Your Advanced AI Chat Copilot',
     template: `%s | Promptly`,
   },
-  description: 'Experience Promptly, the advanced AI chat copilot. Engage in intelligent conversations, generate creative text, and get instant answers with a powerful multi-model AI.',
-  keywords: ['AI Chat', 'Chatbot', 'AI Assistant', 'Promptly', 'Genkit', 'Next.js', 'OpenRouter', 'Gemini API'],
+  description: 'An AI chat app for instant intelligent conversations',
+  keywords: ['AI Chat', 'Chatbot', 'AI Assistant', 'Promptly', 'Genkit', 'Next.js', 'OpenRouter', 'Gemini API', 'PWA'],
   manifest: '/manifest.json',
   openGraph: {
     title: 'Promptly: Your Advanced AI Chat Copilot',
-    description: 'Experience Promptly, the advanced AI chat copilot. Engage in intelligent conversations, generate creative text, and get instant answers with a powerful multi-model AI.',
+    description: 'An AI chat app for instant intelligent conversations',
     url: 'https://promptly.com',
     siteName: 'Promptly',
     images: [
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Promptly: Your Advanced AI Chat Copilot',
-    description: 'Experience Promptly, the advanced AI chat copilot. Engage in intelligent conversations, generate creative text, and get instant answers with a powerful multi-model AI.',
+    description: 'An AI chat app for instant intelligent conversations',
     images: ['https://placehold.co/1200x630.png'],
     creator: '@promptly',
   },
@@ -46,6 +46,11 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Promptly',
+  },
 };
 
 export default function RootLayout({
@@ -56,8 +61,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <head>
-        <meta name="theme-color" content="#121212" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="theme-color" content="#0d6efd" />
         <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/promptly-192x192.png"></link>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></link>
